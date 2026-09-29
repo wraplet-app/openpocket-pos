@@ -1,13 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, Text, TextInput, Pressable, FlatList, StyleSheet } from 'react-native';
+import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { asMinor } from '@openpocket/pos-core';
 import { listSales, type SaleSummary } from '../../src/repos';
 import { useSession } from '../../src/session';
 import { useMoney, PAYMENT_LABEL } from '../../src/pos/ui';
-import { useTheme } from '../../src/theme';
+import { TabHeader, listProps, useTabListInset } from '../../src/pos/Screen';
+import { SearchField, Chip, ChipRow, ChipDivider, EmptyState } from '../../src/pos/kit';
+import { useTheme, space, radius } from '../../src/theme';
 
 function when(ts: number): string {
   const d = new Date(ts);
@@ -21,10 +22,10 @@ const RANGES: { key: Range; label: string; days: number | null }[] = [
   { key: 'today', label: 'Today', days: 0 },
   { key: '7d', label: '7 days', days: 7 },
   { key: '30d', label: '30 days', days: 30 },
-  { key: 'all', label: 'All', days: null },
+  { key: 'all', label: 'All time', days: null },
 ];
 const METHODS: { key: string; label: string }[] = [
-  { key: 'all', label: 'All' },
+  { key: 'all', label: 'Any payment' },
   { key: 'cash', label: 'Cash' },
   { key: 'card', label: 'Card' },
   { key: 'bank', label: 'Transfer' },
@@ -41,9 +42,9 @@ function sinceFor(range: Range): number | undefined {
 
 export default function Sales() {
   const t = useTheme();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const store = useSession((s) => s.store)!;
+  const listInset = useTabListInset();
+  useSession((s) => s.store); // re-render if the store changes
   const money = useMoney();
   const [sales, setSales] = useState<SaleSummary[]>([]);
   const [range, setRange] = useState<Range>('today');
@@ -62,45 +63,52 @@ export default function Sales() {
   }, [sales, method, q]);
 
   const total = useMemo(() => filtered.reduce((sum, x) => sum + x.grand_total, 0), [filtered]);
+  const rangeLabel = RANGES.find((r) => r.key === range)?.label ?? '';
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg, paddingTop: insets.top + 8 }}>
-      <Text style={[s.title, { color: t.fg }]}>Sales</Text>
-
-      <View style={[s.summary, { backgroundColor: t.accent }]}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: t.accentFg, opacity: 0.85, fontSize: 12 }}>{RANGES.find((r) => r.key === range)?.label} total</Text>
-          <Text style={{ color: t.accentFg, fontSize: 24, fontWeight: '800', marginTop: 2 }}>{money(asMinor(total))}</Text>
+    <View style={[s.root, { backgroundColor: t.bg }]}>
+      <TabHeader title="Sales" subtitle={`${rangeLabel} · ${filtered.length} ${filtered.length === 1 ? 'order' : 'orders'}`}>
+        <View style={s.controls}>
+          <SearchField value={q} onChangeText={setQ} placeholder="Search invoice or cashier" />
+          <ChipRow>
+            {RANGES.map((r) => <Chip key={r.key} label={r.label} on={range === r.key} onPress={() => setRange(r.key)} />)}
+            <ChipDivider />
+            {METHODS.map((m) => <Chip key={m.key} label={m.label} on={method === m.key} onPress={() => setMethod(m.key)} />)}
+          </ChipRow>
         </View>
-        <Text style={{ color: t.accentFg, opacity: 0.85, fontSize: 12 }}>{filtered.length} order{filtered.length === 1 ? '' : 's'}</Text>
-      </View>
-
-      <View style={[s.search, { backgroundColor: t.panel, borderColor: t.line }]}>
-        <Ionicons name="search-outline" size={18} color={t.muted} />
-        <TextInput value={q} onChangeText={setQ} placeholder="Search invoice or cashier" placeholderTextColor={t.muted}
-          style={{ flex: 1, marginLeft: 8, color: t.fg, fontSize: 15, paddingVertical: 0 }} />
-      </View>
-
-      <ChipRow items={RANGES.map((r) => ({ key: r.key, label: r.label }))} value={range} onPick={(k) => setRange(k as Range)} t={t} />
-      <ChipRow items={METHODS} value={method} onPick={setMethod} t={t} muted />
+      </TabHeader>
 
       <FlatList
+        {...listProps}
         data={filtered}
         keyExtractor={(x) => x.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: 160 }}
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-        ListEmptyComponent={<Text style={{ color: t.muted, textAlign: 'center', marginTop: 40 }}>No sales match.</Text>}
+        contentContainerStyle={{ padding: space.lg, paddingBottom: listInset, flexGrow: 1 }}
+        ItemSeparatorComponent={Gap}
+        ListHeaderComponent={
+          <View style={[s.summary, { backgroundColor: t.accent }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: t.accentFg, opacity: 0.85, fontSize: 12.5 }}>{rangeLabel} total</Text>
+              <Text style={{ color: t.accentFg, fontSize: 26, lineHeight: 32, fontWeight: '800', marginTop: 2 }} numberOfLines={1} adjustsFontSizeToFit>
+                {money(asMinor(total))}
+              </Text>
+            </View>
+            <Ionicons name="trending-up" size={28} color={t.accentFg} style={{ opacity: 0.7 }} />
+          </View>
+        }
+        ListHeaderComponentStyle={{ marginBottom: space.md }}
+        ListEmptyComponent={<EmptyState icon="receipt-outline" title="No sales found" hint="Try a different period or payment filter." />}
         renderItem={({ item }) => (
-          <Pressable onPress={() => router.push(`/sale/${item.id}`)} style={[s.row, { backgroundColor: t.panel, borderColor: t.line }]}>
+          <Pressable onPress={() => router.push(`/sale/${item.id}`)}
+            style={({ pressed }) => [s.row, { backgroundColor: t.panel, borderColor: t.line, opacity: pressed ? 0.85 : 1 }]}>
             <View style={[s.badge, { backgroundColor: t.accentSoft }]}><Ionicons name="receipt-outline" size={20} color={t.accent} /></View>
-            <View style={{ flex: 1, marginLeft: 12 }}>
+            <View style={{ flex: 1, marginLeft: space.md }}>
               <Text style={{ color: t.fg, fontWeight: '700' }}>{item.invoice_no}</Text>
-              <Text style={{ color: t.muted, fontSize: 12, marginTop: 2 }}>
+              <Text style={{ color: t.muted, fontSize: 12.5, marginTop: 2 }} numberOfLines={1}>
                 {when(item.sold_at)} · {item.item_count} item{item.item_count === 1 ? '' : 's'} · {PAYMENT_LABEL[item.payment_method] ?? item.payment_method}
               </Text>
             </View>
             <Text style={{ color: t.fg, fontWeight: '800', fontSize: 16 }}>{money(asMinor(item.grand_total))}</Text>
-            <Ionicons name="chevron-forward" size={18} color={t.muted} style={{ marginLeft: 8 }} />
+            <Ionicons name="chevron-forward" size={18} color={t.faint} style={{ marginLeft: space.sm }} />
           </Pressable>
         )}
       />
@@ -108,30 +116,12 @@ export default function Sales() {
   );
 }
 
-function ChipRow({ items, value, onPick, t, muted }: {
-  items: { key: string; label: string }[]; value: string; onPick: (k: string) => void; t: ReturnType<typeof useTheme>; muted?: boolean;
-}) {
-  return (
-    <View style={s.chips}>
-      {items.map((it) => {
-        const on = value === it.key;
-        return (
-          <Pressable key={it.key} onPress={() => onPick(it.key)}
-            style={[s.chip, { borderColor: on ? t.accent : t.line, backgroundColor: on ? t.accentSoft : (muted ? 'transparent' : t.panel) }]}>
-            <Text style={{ color: on ? t.accent : t.muted, fontWeight: '600', fontSize: 13 }}>{it.label}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
+const Gap = () => <View style={{ height: space.sm + 2 }} />;
 
 const s = StyleSheet.create({
-  title: { fontSize: 26, fontWeight: '800', paddingHorizontal: 16, marginBottom: 12 },
-  summary: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, borderRadius: 16, padding: 16 },
-  search: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginTop: 12, paddingHorizontal: 14, height: 46, borderRadius: 14, borderWidth: 1 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, marginTop: 10 },
-  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
-  row: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 14, padding: 12 },
-  badge: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  root: { flex: 1 },
+  controls: { gap: space.md, marginTop: space.xs },
+  summary: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.xl, padding: space.xl },
+  row: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: radius.lg, padding: space.md },
+  badge: { width: 42, height: 42, borderRadius: radius.md - 2, alignItems: 'center', justifyContent: 'center' },
 });

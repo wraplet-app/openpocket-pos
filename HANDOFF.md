@@ -15,7 +15,7 @@ Prereqs: **Node ≥ 22**, **pnpm 10** (`corepack enable`), Android Studio +
 an emulator (or a physical Android phone with USB debugging), Java 17.
 
 ```bash
-git clone https://github.com/Kashifalirajper/openpocket-pos.git
+git clone https://github.com/wraplet-app/openpocket-pos.git
 cd openpocket-pos
 pnpm install
 ```
@@ -46,10 +46,16 @@ adb shell am start -a android.intent.action.VIEW \
 ```
 
 **Seed demo data (one tap):** on a fresh install, the setup screen shows a
-**"Load demo shop (dev)"** button (dev builds only). It creates a full demo
-store — 10 products, 2 staff (**owner PIN 1234**, **cashier PIN 5678**), 3
-customers and a mix of cash/card/credit sales — via `apps/mobile/src/seed.ts`.
-Handy for exploring the app immediately after cloning.
+**"Load demo shop (dev)"** button (dev builds only). It creates "Maple Street
+Market" (USD): a full shop profile with logo and a customised receipt, 24 real
+products in 4 categories with real barcodes and photos, 2 staff (**owner Alex,
+PIN 1234**; **cashier Sam, PIN 5678**), 3 customers and a mix of
+cash/card/credit sales — via `apps/mobile/src/seed.ts`. To reset the demo,
+clear the app's data (`adb shell pm clear io.openpocket.pos`).
+
+**Record a feature tour** (emulator running, demo shop loaded):
+`powershell -File scripts\demo-tour.ps1 [-Record] [-Dwell 1.0]` walks through every
+feature at ~1 second each (`-Record` saves an mp4 to the Desktop).
 
 > **Windows note:** the repo must live at a short path (e.g. `C:\opos`). Deep
 > paths blow past Windows' path limit during the Android build. `.npmrc` sets
@@ -88,6 +94,26 @@ backend required to run.
 
 ---
 
+## 2b. UI conventions (keep these)
+
+Every screen is built from the same few pieces so headers, safe areas and scrolling
+behave identically everywhere (see `apps/mobile/src/pos/Screen.tsx`, `kit.tsx`, and the
+tokens at the bottom of `src/theme.ts`):
+
+- `<Screen title right footer scroll>` — fixed header with back button, scrolling body,
+  optional pinned `footer` (Save buttons). Never hand-roll a header or use
+  `insets.top` in a screen.
+- `<TabHeader>` — large fixed header for the five bottom-tab screens; the list below it scrolls.
+- `SearchField`, `Chip`/`ChipRow`, `EmptyState`, `PrimaryButton` — shared controls.
+- Spread `listProps` / `scrollProps` on lists for smooth virtualised scrolling; no shadows on list rows.
+- Use `space` / `radius` / `type` tokens instead of magic numbers.
+- Nothing is currency- or country-specific: money always goes through `useMoney` / `format`,
+  the setup currency defaults from the device region, and the demo shop is a US-style
+  market ("Maple Street Market", USD). Sample product photos are credited in
+  `apps/mobile/assets/demo/ATTRIBUTION.md`.
+
+---
+
 ## 3. Where things live (map)
 
 **App screens** — `apps/mobile/app/` (Expo Router file routes):
@@ -99,6 +125,8 @@ backend required to run.
 - `customers.tsx`, `customer/[id].tsx`, `add-customer.tsx` — customers + credit.
 - `suppliers.tsx`, `purchases.tsx`, `new-purchase.tsx`, `add-supplier.tsx`.
 - `staff.tsx`, `add-staff.tsx` — staff & roles.
+- `store-settings.tsx` — **Shop profile & receipts** (owner only): logo, contact details,
+  tax id, receipt paper/color/footer/terms with a live preview.
 - `reports.tsx`, `data.tsx` (Backup/CSV + full JSON backup/restore), `cloud-sync.tsx`.
 
 **App logic** — `apps/mobile/src/`:
@@ -134,6 +162,7 @@ applied migration — add a new numbered one and append it to `MIGRATIONS` in
 | 0003 | suppliers | suppliers, purchases, purchase_items |
 | 0004 | staff | staff (+ `sales.staff_id`) |
 | 0005 | sync | `sync_state` (local-only cloud config + cursors) |
+| 0006 | store_profile | shop profile (email, website, tax id, tagline, logo) + receipt settings (footer, terms, color, paper size, show/hide toggles) on `stores` |
 
 Tests: `packages/database/test/` — migrations, sync merge, and a full
 device→server→device round-trip. `packages/pos-core/test/` — money/pricing.
@@ -196,6 +225,23 @@ device from cloud**.
 
 ## 7. Current state & what's next
 
+**Shop branding & receipts (new):** onboarding is two steps — shop details (logo, name,
+tagline, phone, email, website, address, tax id, currency) then receipt design (A4 /
+80 mm / 58 mm, accent color, thank-you message, terms, show/hide logo · contact ·
+"served by") with a live preview. Everything is editable later in More → Shop profile &
+receipts (owner only) and drives the printed/PDF invoice (`src/print.ts`) and the
+on-screen receipt. Pure helpers + tests live in `src/branding.ts`. The logo file is
+device-local (not synced); all text fields sync.
+
+**Products (new):** category, SKU, unit, per-product low-stock level, margin hint, and an
+edit screen (pencil on each card → `add-product?id=…`). Products tab has one fixed
+filter row (stock filters + category chips) and searches name/barcode/SKU/category.
+
+**Design pass (new):** every screen uses the shared `Screen` / `TabHeader` layout (see
+§2b): fixed headers, safe-area aware footers, virtualised smooth lists. Nothing is
+country-specific: currency defaults from the device region (10 offered), quick-cash
+buttons scale to the sale, and the demo data is a generic US-style market.
+
 **Done & verified on the Android emulator:** onboarding, sell/checkout (cash,
 split, credit), returns, credit ledger, reports (numbers cross-checked),
 purchases restock, CSV export/import, full JSON backup, thermal/A4 print + PDF
@@ -214,7 +260,18 @@ screen, search/filters. Cloud sync engine passes an end-to-end test suite.
   to a server sequence column if you ever run many badly clock-skewed devices.
 - Push sends changed rows in one request — chunk it if a device ever has many
   thousands of unsynced rows.
-- Image sync (R2), roles beyond 3 tiers, and web/iOS builds are open runway.
+- Image sync (R2) — product photos and the shop logo are local files; roles beyond 3
+  tiers and web/iOS builds are open runway.
+- Not yet verified on hardware: a real thermal printer at 58/80 mm, and real-camera
+  barcode decode (emulator only shows a fake room).
+- The A4/thermal receipt HTML was checked in a browser and via the PDF share flow, not
+  on every printer driver.
+- `tsc --noEmit` still shows the pre-existing `Minor`/`CurrencyConfig` re-export errors
+  (plus the same two in the new `StoreProfileForm.tsx` / `*.test.ts` imports); Metro
+  strips types so the app runs. Fixing the `pos-core` re-exports clears nearly all of them.
+- Demo product photos come from Open Food Facts / Open Beauty Facts (CC BY-SA) — keep
+  `apps/mobile/assets/demo/ATTRIBUTION.md` with them if you redistribute.
+- The sync worker's `schema.sql` includes the new `stores` columns but is still not deployed.
 
 **How to continue:** `pnpm install`, `pnpm test`, run the app (§1). Pick the next
 item, add a migration if the schema changes, keep SQL in `repos.ts` and money in

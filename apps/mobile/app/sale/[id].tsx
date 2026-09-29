@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, Alert, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { View, Text, Pressable, Alert, StyleSheet } from 'react-native';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { roundHalfAwayFromZero, asMinor, type Minor } from '@openpocket/pos-core';
 import { getSale, processReturn, type SaleDetail, type RefundMethod } from '../../src/repos';
@@ -9,7 +8,8 @@ import { useSession, useRole } from '../../src/session';
 import { can } from '../../src/roles';
 import { useMoney, PAYMENT_LABEL } from '../../src/pos/ui';
 import { printInvoice, shareInvoicePdf, type PrintableReceipt } from '../../src/print';
-import { useTheme, type Theme } from '../../src/theme';
+import { useTheme, space, radius, type as ty } from '../../src/theme';
+import { Screen, IconButton } from '../../src/pos/Screen';
 
 const METHODS: { key: RefundMethod; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'cash', label: 'Cash', icon: 'cash-outline' },
@@ -20,8 +20,6 @@ const METHODS: { key: RefundMethod; label: string; icon: keyof typeof Ionicons.g
 
 export default function SaleDetailScreen() {
   const t = useTheme();
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const store = useSession((s) => s.store)!;
   const canReturn = can(useRole(), 'returns');
@@ -85,44 +83,53 @@ export default function SaleDetailScreen() {
     shareInvoicePdf(store, p).catch((e) => Alert.alert('Share failed', e instanceof Error ? e.message : String(e)));
   };
 
-  if (!detail) return <View style={{ flex: 1, backgroundColor: t.bg }} />;
+  if (!detail) return <Screen title="Sale"><View /></Screen>;
   const { header, items, refundedTotal } = detail;
   const fullyReturned = items.every((i) => i.quantity - i.returned <= 0);
   const showReturns = canReturn && !fullyReturned;
 
+  const refundFooter = showReturns ? (
+    <Pressable onPress={submit} disabled={!anySelected || busy}
+      style={[s.primary, { backgroundColor: t.danger, opacity: !anySelected || busy ? 0.5 : 1 }]}>
+      <Ionicons name="arrow-undo-outline" size={18} color="#fff" />
+      <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16, marginLeft: space.sm }}>
+        {busy ? 'Processing…' : anySelected ? `Refund ${money(asMinor(refundPreview))}` : 'Select items to return'}
+      </Text>
+    </Pressable>
+  ) : undefined;
+
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg, paddingTop: insets.top + 10 }}>
-      <View style={s.head}>
-        <Pressable onPress={() => router.back()} hitSlop={8}><Ionicons name="chevron-back" size={24} color={t.fg} /></Pressable>
-        <Text style={{ color: t.fg, fontSize: 18, fontWeight: '800' }}>{header.invoice_no}</Text>
-        <View style={{ flexDirection: 'row', gap: 18 }}>
-          <Pressable onPress={sharePdf} hitSlop={8}><Ionicons name="share-outline" size={22} color={t.accent} /></Pressable>
-          <Pressable onPress={reprint} hitSlop={8}><Ionicons name="print-outline" size={22} color={t.accent} /></Pressable>
+    <Screen
+      title={header.invoice_no}
+      subtitle={new Date(header.sold_at).toLocaleString()}
+      footer={refundFooter}
+      right={
+        <>
+          <IconButton icon="share-outline" label="Share invoice" onPress={sharePdf} />
+          <IconButton icon="print-outline" label="Print invoice" onPress={reprint} />
+        </>
+      }
+    >
+      <View style={[s.card, { backgroundColor: t.panel, borderColor: t.line }]}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={[ty.body, { color: t.muted }]}>Sale total</Text>
+          <Text style={[ty.h1, { color: t.fg }]}>{money(asMinor(header.grand_total))}</Text>
         </View>
+        {header.staff_name && (
+          <View style={s.metaRow}>
+            <Ionicons name="person-circle-outline" size={15} color={t.muted} />
+            <Text style={[ty.small, { color: t.muted, marginLeft: 5 }]}>Sold by {header.staff_name}</Text>
+          </View>
+        )}
+        {refundedTotal > 0 && (
+          <View style={[s.refundedTag, { backgroundColor: t.warn + '22' }]}>
+            <Ionicons name="arrow-undo-outline" size={14} color={t.warn} />
+            <Text style={{ color: t.warn, fontWeight: '700', marginLeft: 6 }}>{money(asMinor(refundedTotal))} refunded</Text>
+          </View>
+        )}
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <View style={[s.card, { backgroundColor: t.panel, borderColor: t.line }]}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ color: t.muted }}>Sale total</Text>
-            <Text style={{ color: t.fg, fontWeight: '800', fontSize: 18 }}>{money(asMinor(header.grand_total))}</Text>
-          </View>
-          <Text style={{ color: t.muted, fontSize: 12, marginTop: 4 }}>{new Date(header.sold_at).toLocaleString()}</Text>
-          {header.staff_name && (
-            <View style={s.metaRow}>
-              <Ionicons name="person-circle-outline" size={15} color={t.muted} />
-              <Text style={{ color: t.muted, fontSize: 12, marginLeft: 5 }}>Sold by {header.staff_name}</Text>
-            </View>
-          )}
-          {refundedTotal > 0 && (
-            <View style={[s.refundedTag, { backgroundColor: t.warn + '22' }]}>
-              <Ionicons name="arrow-undo-outline" size={14} color={t.warn} />
-              <Text style={{ color: t.warn, fontWeight: '700', marginLeft: 6 }}>{money(asMinor(refundedTotal))} refunded</Text>
-            </View>
-          )}
-        </View>
-
-        <Text style={[s.section, { color: t.fg }]}>{showReturns ? 'Return items' : 'Items'}</Text>
+      <Text style={[ty.h2, s.section, { color: t.fg }]}>{showReturns ? 'Return items' : 'Items'}</Text>
         <View style={[s.card, { backgroundColor: t.panel, borderColor: t.line }]}>
           {items.map((it, i) => {
             const remaining = it.quantity - it.returned;
@@ -149,54 +156,44 @@ export default function SaleDetailScreen() {
           })}
         </View>
 
-        {!canReturn && !fullyReturned && (
-          <View style={[s.noteRow, { backgroundColor: t.accentSoft }]}>
-            <Ionicons name="lock-closed-outline" size={16} color={t.muted} />
-            <Text style={{ color: t.muted, fontSize: 13, marginLeft: 8, flex: 1 }}>Only managers and owners can process returns.</Text>
+      {!canReturn && !fullyReturned && (
+        <View style={[s.noteRow, { backgroundColor: t.accentSoft }]}>
+          <Ionicons name="lock-closed-outline" size={16} color={t.muted} />
+          <Text style={[ty.small, { color: t.muted, marginLeft: space.sm, flex: 1 }]}>Only managers and owners can process returns.</Text>
+        </View>
+      )}
+
+      {showReturns && (
+        <>
+          <Text style={[ty.h2, s.section, { color: t.fg }]}>Refund method</Text>
+          <View style={s.methods}>
+            {methods.map((m) => {
+              const on = method === m.key;
+              return (
+                <Pressable key={m.key} onPress={() => setMethod(m.key)}
+                  style={[s.method, { borderColor: on ? t.accent : t.line, backgroundColor: on ? t.accentSoft : t.panel }]}>
+                  <Ionicons name={m.icon} size={18} color={on ? t.accent : t.fg} />
+                  <Text style={{ color: on ? t.accent : t.fg, fontWeight: '700', marginTop: 3, fontSize: 12 }}>{m.label}</Text>
+                </Pressable>
+              );
+            })}
           </View>
-        )}
-
-        {showReturns && (
-          <>
-            <Text style={[s.section, { color: t.fg }]}>Refund method</Text>
-            <View style={s.methods}>
-              {methods.map((m) => {
-                const on = method === m.key;
-                return (
-                  <Pressable key={m.key} onPress={() => setMethod(m.key)}
-                    style={[s.method, { borderColor: on ? t.accent : t.line, backgroundColor: on ? t.accentSoft : t.panel }]}>
-                    <Ionicons name={m.icon} size={18} color={on ? t.accent : t.fg} />
-                    <Text style={{ color: on ? t.accent : t.fg, fontWeight: '700', marginTop: 3, fontSize: 12 }}>{m.label}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <Pressable onPress={submit} disabled={!anySelected || busy}
-              style={[s.primary, { backgroundColor: t.danger, opacity: !anySelected || busy ? 0.5 : 1 }]}>
-              <Ionicons name="arrow-undo-outline" size={18} color="#fff" />
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16, marginLeft: 8 }}>
-                {busy ? 'Processing…' : anySelected ? `Refund ${money(asMinor(refundPreview))}` : 'Select items to return'}
-              </Text>
-            </Pressable>
-          </>
-        )}
-      </ScrollView>
-    </View>
+        </>
+      )}
+    </Screen>
   );
 }
 
 const s = StyleSheet.create({
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 8 },
-  card: { borderWidth: 1, borderRadius: 16, padding: 16 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
-  refundedTag: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, marginTop: 12 },
-  noteRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, padding: 14, marginTop: 20 },
-  section: { fontSize: 16, fontWeight: '800', marginTop: 24, marginBottom: 10 },
-  item: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
-  stepper: { borderWidth: 1, borderRadius: 10, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4, paddingVertical: 3, gap: 4 },
+  card: { borderWidth: 1, borderRadius: radius.lg, padding: 14 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: space.sm },
+  refundedTag: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, marginTop: space.md },
+  noteRow: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.md, padding: 14, marginTop: space.xl },
+  section: { marginTop: space.xl, marginBottom: space.sm },
+  item: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.md },
+  stepper: { borderWidth: 1, borderRadius: radius.sm, flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.xs, paddingVertical: 3, gap: space.xs },
   stepBtn: { width: 34, height: 30, alignItems: 'center', justifyContent: 'center' },
-  methods: { flexDirection: 'row', gap: 8 },
-  method: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 10, alignItems: 'center' },
-  primary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 14, paddingVertical: 16, marginTop: 20 },
+  methods: { flexDirection: 'row', gap: space.sm },
+  method: { flex: 1, borderWidth: 1, borderRadius: radius.md, paddingVertical: 10, alignItems: 'center' },
+  primary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, height: 52 },
 });

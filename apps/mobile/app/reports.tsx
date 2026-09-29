@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { Screen, scrollProps } from '../src/pos/Screen';
+import { Chip, ChipRow } from '../src/pos/kit';
 import { Ionicons } from '@expo/vector-icons';
 import { asMinor } from '@openpocket/pos-core';
 import {
@@ -10,7 +12,7 @@ import {
 } from '../src/repos';
 import { useSession } from '../src/session';
 import { useMoney, PAYMENT_LABEL } from '../src/pos/ui';
-import { useTheme, type Theme } from '../src/theme';
+import { useTheme, space, radius, type Theme } from '../src/theme';
 
 type Range = 'today' | 'week' | 'month';
 const RANGES: { key: Range; label: string }[] = [
@@ -58,25 +60,16 @@ export default function Reports() {
   const maxPay = Math.max(1, ...payments.map((p) => p.amount));
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg, paddingTop: insets.top + 10 }}>
-      <View style={s.head}>
-        <Pressable onPress={() => router.back()} hitSlop={8}><Ionicons name="chevron-back" size={24} color={t.fg} /></Pressable>
-        <Text style={{ color: t.fg, fontSize: 22, fontWeight: '800' }}>Reports</Text>
-        <View style={{ width: 24 }} />
+    <Screen title="Reports" scroll={false}>
+      <View style={s.pinned}>
+        <ChipRow>
+          {RANGES.map((r) => (
+            <Chip key={r.key} label={r.label} on={range === r.key} onPress={() => pick(r.key)} />
+          ))}
+        </ChipRow>
       </View>
 
-      <View style={[s.segment, { backgroundColor: t.surfaceAlt }]}>
-        {RANGES.map((r) => {
-          const on = range === r.key;
-          return (
-            <Pressable key={r.key} onPress={() => pick(r.key)} style={[s.seg, on && { backgroundColor: t.panel, boxShadow: t.shadow }]}>
-              <Text style={{ color: on ? t.fg : t.muted, fontWeight: '700' }}>{r.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <ScrollView {...scrollProps} style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space.xxl }}>
         {/* revenue hero */}
         <View style={[s.hero, { backgroundColor: t.accent }]}>
           <Text style={{ color: t.accentFg, opacity: 0.9, fontWeight: '700' }}>Total sales</Text>
@@ -159,7 +152,7 @@ export default function Reports() {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
@@ -174,19 +167,17 @@ function Stat({ t, icon, label, value, tint }: { t: Theme; icon: keyof typeof Io
 }
 
 const s = StyleSheet.create({
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 },
-  segment: { flexDirection: 'row', marginHorizontal: 16, borderRadius: 12, padding: 4 },
-  seg: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 9 },
-  hero: { borderRadius: 20, padding: 18 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 },
-  stat: { flexGrow: 1, flexBasis: '47%', borderWidth: 1, borderRadius: 16, padding: 14 },
+  pinned: { padding: space.lg, paddingTop: space.md },
+  hero: { borderRadius: radius.xl, padding: 18 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md, marginTop: space.md },
+  stat: { flexGrow: 1, flexBasis: '47%', borderWidth: 1, borderRadius: radius.lg, padding: 14 },
   statIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   section: { fontSize: 16, fontWeight: '800', marginTop: 24, marginBottom: 10 },
-  card: { borderWidth: 1, borderRadius: 16, padding: 14 },
+  card: { borderWidth: 1, borderRadius: radius.lg, padding: 14 },
   payRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7 },
   barTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: 'rgba(128,128,128,0.15)', marginHorizontal: 8, overflow: 'hidden' },
   barFill: { height: 8, borderRadius: 4 },
   listRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 11 },
   rank: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  creditCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 16, padding: 14, marginTop: 24 },
+  creditCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: radius.lg, padding: 14, marginTop: 24 },
 });

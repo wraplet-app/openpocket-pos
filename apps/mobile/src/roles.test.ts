@@ -8,6 +8,8 @@ test('capabilities respect role rank', () => {
   assert.equal(can('manager', 'reports'), true);
   assert.equal(can('cashier', 'reports'), false);
   assert.equal(can('cashier', 'products'), false);
+  assert.equal(can('owner', 'shop'), true);
+  assert.equal(can('manager', 'shop'), false); // shop profile is owner-only
 });
 
 test('PIN hash is salted, verifiable, and not plaintext', () => {

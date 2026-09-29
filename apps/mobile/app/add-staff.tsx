@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Screen } from '../src/pos/Screen';
+import { PrimaryButton } from '../src/pos/kit';
 import { getStore, listStaff, createStaff, updateStaff, type Store } from '../src/repos';
 import { ROLES, ROLE_LABEL, isValidPin, type Role } from '../src/roles';
 import { useSession } from '../src/session';
-import { useTheme } from '../src/theme';
+import { useTheme, space, radius } from '../src/theme';
 
 const ROLE_HINT: Record<Role, string> = {
   owner: 'Full access, including staff management',
@@ -16,7 +16,6 @@ const ROLE_HINT: Record<Role, string> = {
 
 export default function AddStaff() {
   const t = useTheme();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ id?: string; name?: string; role?: Role }>();
   const editing = !!params.id;
@@ -70,22 +69,14 @@ export default function AddStaff() {
   };
 
   return (
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingTop: insets.top + 16, backgroundColor: t.bg, flexGrow: 1 }}>
-      <View style={st.head}>
-        <Pressable onPress={() => router.back()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons name="chevron-back" size={22} color={t.accent} />
-          <Text style={{ color: t.accent, fontSize: 16 }}>Back</Text>
-        </Pressable>
-        <Text style={{ color: t.fg, fontSize: 18, fontWeight: '800' }}>{editing ? 'Edit staff' : 'New staff'}</Text>
-        <View style={{ width: 60 }} />
-      </View>
-
-      <Text style={[st.label, { color: t.muted }]}>NAME</Text>
-      <TextInput value={name} onChangeText={setName} placeholder="e.g. Ali Khan" placeholderTextColor={t.muted}
+    <Screen title={editing ? 'Edit staff' : 'New staff'}
+      footer={<PrimaryButton label={editing ? 'Save changes' : 'Add staff'} onPress={save} busy={busy} disabled={!store} />}>
+      <Text style={[st.label, { color: t.muted }]}>Name</Text>
+      <TextInput value={name} onChangeText={setName} placeholder="e.g. Jordan Smith" placeholderTextColor={t.muted}
         style={[st.input, { color: t.fg, borderColor: t.line, backgroundColor: t.panel }]} />
 
-      <Text style={[st.label, { color: t.muted }]}>ROLE</Text>
-      {firstEver && <Text style={{ color: t.muted, fontSize: 12, marginBottom: 8 }}>The first account must be an owner.</Text>}
+      <Text style={[st.label, { color: t.muted }]}>Role</Text>
+      {firstEver && <Text style={{ color: t.muted, fontSize: 12, marginBottom: space.sm }}>The first account must be an owner.</Text>}
       <View style={st.roleRow}>
         {ROLES.map((r) => {
           const on = role === r;
@@ -98,32 +89,26 @@ export default function AddStaff() {
           );
         })}
       </View>
-      <Text style={{ color: t.muted, fontSize: 13, marginTop: 8 }}>{ROLE_HINT[role]}</Text>
+      <Text style={{ color: t.muted, fontSize: 13, marginTop: space.sm }}>{ROLE_HINT[role]}</Text>
 
-      <Text style={[st.label, { color: t.muted }]}>{editing ? '4-DIGIT PIN (leave blank to keep)' : '4-DIGIT PIN'}</Text>
+      <Text style={[st.label, { color: t.muted }]}>{editing ? '4-digit PIN (leave blank to keep)' : '4-digit PIN'}</Text>
       <TextInput value={pin} onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
         keyboardType="number-pad" secureTextEntry maxLength={4} placeholder="••••" placeholderTextColor={t.muted}
         style={[st.input, { color: t.fg, borderColor: t.line, backgroundColor: t.panel, letterSpacing: 8 }]} />
 
-      <Text style={[st.label, { color: t.muted }]}>CONFIRM PIN</Text>
+      <Text style={[st.label, { color: t.muted }]}>Confirm PIN</Text>
       <TextInput value={confirm} onChangeText={(v) => setConfirm(v.replace(/\D/g, '').slice(0, 4))}
         keyboardType="number-pad" secureTextEntry maxLength={4} placeholder="••••" placeholderTextColor={t.muted}
         style={[st.input, { color: t.fg, borderColor: t.line, backgroundColor: t.panel, letterSpacing: 8 }]} />
 
-      {err && <Text style={{ color: t.danger, marginTop: 14 }}>{err}</Text>}
-
-      <Pressable onPress={save} disabled={busy || !store} style={[st.primary, { backgroundColor: t.accent, opacity: busy || !store ? 0.5 : 1 }]}>
-        <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 17 }}>{busy ? 'Saving…' : editing ? 'Save changes' : 'Add staff'}</Text>
-      </Pressable>
-    </ScrollView>
+      {err && <Text style={{ color: t.danger, marginTop: space.lg }}>{err}</Text>}
+    </Screen>
   );
 }
 
 const st = StyleSheet.create({
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  label: { fontSize: 12, fontWeight: '800', letterSpacing: 0.6, marginTop: 20, marginBottom: 8 },
-  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
-  roleRow: { flexDirection: 'row', gap: 8 },
-  rolePill: { flex: 1, alignItems: 'center', borderWidth: 1, borderRadius: 12, paddingVertical: 12 },
-  primary: { borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 28 },
+  label: { fontSize: 13, fontWeight: '600', marginTop: space.lg, marginBottom: space.sm },
+  input: { borderWidth: 1, borderRadius: radius.md, paddingHorizontal: space.lg, paddingVertical: 13, fontSize: 16 },
+  roleRow: { flexDirection: 'row', gap: space.sm },
+  rolePill: { flex: 1, alignItems: 'center', borderWidth: 1, borderRadius: radius.md, paddingVertical: 12 },
 });

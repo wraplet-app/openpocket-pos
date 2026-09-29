@@ -1,19 +1,26 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, Image, Alert, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, Image, Alert, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { fromMajorString, asMinor } from '@openpocket/pos-core';
-import { getStore, createProduct, type Store } from '../src/repos';
+import { fromMajorString, toMajorNumber, asMinor } from '@openpocket/pos-core';
+import {
+  getStore, createProduct, getProduct, updateProductFields, listCategories, ensureCategory, DEFAULT_LOW_STOCK,
+  type Store, type Category,
+} from '../src/repos';
 import { pickFromGallery, takePhoto } from '../src/pos/images';
 import { lookupBarcode, downloadProductImage } from '../src/pos/lookup';
-import { useTheme } from '../src/theme';
+import { useTheme, space, radius } from '../src/theme';
+import { Screen } from '../src/pos/Screen';
+import { Chip, PrimaryButton } from '../src/pos/kit';
 
+const UNITS = ['unit', 'pcs', 'pack', 'box', 'dozen', 'kg', 'g', 'L', 'ml'];
+
+/** Add a product, or edit one when opened with ?id=… (stock is adjusted via Purchases, not here). */
 export default function AddProduct() {
   const t = useTheme();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{ barcode?: string }>();
+  const params = useLocalSearchParams<{ barcode?: string; id?: string }>();
+  const editId = params.id;
   const [store, setStore] = useState<Store | null>(null);
   const [name, setName] = useState('');
   const [barcode, setBarcode] = useState(params.barcode ?? '');
@@ -21,12 +28,40 @@ export default function AddProduct() {
   const [cost, setCost] = useState('');
   const [taxPct, setTaxPct] = useState('0');
   const [stock, setStock] = useState('0');
+  const [sku, setSku] = useState('');
+  const [unit, setUnit] = useState('unit');
+  const [lowStock, setLowStock] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [newCategory, setNewCategory] = useState('');
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [currentStock, setCurrentStock] = useState<number | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [looking, setLooking] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  useEffect(() => { getStore().then(setStore); }, []);
+  useEffect(() => {
+    getStore().then((s) => {
+      setStore(s);
+      if (s) listCategories(s.id).then(setCategories);
+    });
+  }, []);
+
+  // Edit mode: load the product into the form.
+  useEffect(() => {
+    if (!editId || !store) return;
+    getProduct(editId).then((p) => {
+      if (!p) return;
+      const d = store.currency_decimals;
+      setName(p.name); setBarcode(p.barcode ?? ''); setImageUri(p.image_uri);
+      setPrice(String(toMajorNumber(asMinor(p.selling_price), d)));
+      setCost(p.cost_price ? String(toMajorNumber(asMinor(p.cost_price), d)) : '');
+      setTaxPct(String(p.tax_bps / 100)); setSku(p.sku ?? ''); setUnit(p.unit ?? 'unit');
+      setLowStock(p.low_stock_threshold != null ? String(p.low_stock_threshold) : '');
+      setCategoryId(p.category_id ?? null); setCurrentStock(p.stock);
+    });
+  }, [editId, store]);
 
   // Auto-fill from Open Food Facts when we arrive with a scanned barcode.
   useEffect(() => { if (params.barcode) lookup(params.barcode, true); }, [params.barcode]);
@@ -70,9 +105,15 @@ export default function AddProduct() {
       if (sellingPrice <= 0) throw new Error('Selling price must be greater than 0');
       const costPrice = cost ? fromMajorString(cost, decimals) : asMinor(0);
       const taxBps = Math.round(parseFloat(taxPct || '0') * 100);
+      if (!(taxBps >= 0)) throw new Error('Tax % must be 0 or more');
       const openingStock = Math.max(0, Math.floor(parseFloat(stock || '0')));
+      const lowStockThreshold = lowStock.trim() === '' ? null : Math.max(0, Math.floor(parseFloat(lowStock)));
       setBusy(true);
-      await createProduct({ storeId: store.id, name: name.trim(), barcode: barcode.trim() || null, imageUri, sellingPrice, costPrice, taxBps, openingStock });
+      let catId = categoryId;
+      if (addingCategory && newCategory.trim()) catId = await ensureCategory(store.id, newCategory);
+      const common = { name: name.trim(), barcode: barcode.trim() || null, imageUri, sellingPrice, costPrice, taxBps, sku: sku.trim() || null, unit, categoryId: catId, lowStockThreshold };
+      if (editId) await updateProductFields({ id: editId, ...common });
+      else await createProduct({ storeId: store.id, ...common, openingStock });
       router.back();
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -80,25 +121,25 @@ export default function AddProduct() {
     }
   };
 
-  const field = (label: string, value: string, set: (v: string) => void, opts?: { kb?: 'decimal-pad' | 'number-pad'; ph?: string }) => (
+  const field = (label: string, value: string, set: (v: string) => void, opts?: { kb?: 'decimal-pad' | 'number-pad'; ph?: string; caps?: 'none' | 'sentences' | 'words' }) => (
     <>
       <Text style={[st.label, { color: t.muted }]}>{label}</Text>
       <TextInput value={value} onChangeText={set} placeholder={opts?.ph} placeholderTextColor={t.muted}
-        keyboardType={opts?.kb} style={[st.input, { color: t.fg, borderColor: t.line, backgroundColor: t.panel }]} />
+        keyboardType={opts?.kb} autoCapitalize={opts?.caps} style={[st.input, { color: t.fg, borderColor: t.line, backgroundColor: t.panel }]} />
     </>
   );
 
-  return (
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingTop: insets.top + 16, backgroundColor: t.bg, flexGrow: 1 }}>
-      <View style={st.head}>
-        <Pressable onPress={() => router.back()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons name="chevron-back" size={22} color={t.accent} />
-          <Text style={{ color: t.accent, fontSize: 16 }}>Back</Text>
-        </Pressable>
-        <Text style={{ color: t.fg, fontSize: 18, fontWeight: '700' }}>Add product</Text>
-        <View style={{ width: 50 }} />
-      </View>
+  const chip = (label: string, on: boolean, onPress: () => void, key?: string) => (
+    <Chip key={key ?? label} label={label} on={on} onPress={onPress} />
+  );
 
+  // Margin hint so shopkeepers can sanity-check their pricing.
+  const sp = parseFloat(price), cp = parseFloat(cost);
+  const margin = sp > 0 && cp > 0 && Number.isFinite(sp) && Number.isFinite(cp) ? Math.round(((sp - cp) / sp) * 100) : null;
+
+  return (
+    <Screen title={editId ? 'Edit product' : 'Add product'}
+      footer={<PrimaryButton label={editId ? 'Save changes' : 'Save product'} onPress={save} busy={busy} disabled={!store} />}>
       {params.barcode ? (
         <View style={[st.scanned, { borderColor: t.ok, backgroundColor: t.panel }]}>
           <Text style={{ color: t.muted, fontSize: 12 }}>Scanned barcode</Text>
@@ -106,10 +147,10 @@ export default function AddProduct() {
         </View>
       ) : null}
 
-      <View style={{ alignSelf: 'center', marginTop: 8 }}>
+      <View style={{ alignSelf: 'center', marginTop: params.barcode ? space.lg : 0 }}>
         <Pressable onPress={chooseImage}>
           {imageUri ? (
-            <Image source={{ uri: imageUri }} style={[st.photo, { borderColor: t.line }]} />
+            <Image source={{ uri: imageUri }} style={[st.photo, { borderColor: t.line, backgroundColor: '#fff' }]} resizeMode="contain" />
           ) : (
             <View style={[st.photo, st.photoEmpty, { borderColor: t.line, backgroundColor: t.surfaceAlt }]}>
               <Ionicons name="camera-outline" size={30} color={t.muted} />
@@ -124,10 +165,21 @@ export default function AddProduct() {
         )}
       </View>
 
-      {field('Name', name, setName, { ph: 'e.g. Cola 500ml' })}
+      {field('Name', name, setName, { ph: 'e.g. Cola 500ml', caps: 'words' })}
+
+      <Text style={[st.label, { color: t.muted }]}>Category</Text>
+      <View style={st.wrap}>
+        {chip('None', !addingCategory && categoryId === null, () => { setAddingCategory(false); setCategoryId(null); })}
+        {categories.map((c) => chip(c.name, !addingCategory && categoryId === c.id, () => { setAddingCategory(false); setCategoryId(c.id); }, c.id))}
+        {chip('+ New', addingCategory, () => setAddingCategory(true))}
+      </View>
+      {addingCategory && (
+        <TextInput value={newCategory} onChangeText={setNewCategory} placeholder="New category name" placeholderTextColor={t.muted} autoCapitalize="words"
+          style={[st.input, { color: t.fg, borderColor: t.accent, backgroundColor: t.panel, marginTop: space.md }]} />
+      )}
 
       <Text style={[st.label, { color: t.muted }]}>Barcode</Text>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
+      <View style={{ flexDirection: 'row', gap: space.sm }}>
         <TextInput value={barcode} onChangeText={setBarcode} placeholder="scan or type (optional)" placeholderTextColor={t.muted}
           keyboardType="number-pad" style={[st.input, { flex: 1, color: t.fg, borderColor: t.line, backgroundColor: t.panel }]} />
         <Pressable onPress={() => lookup(barcode)} disabled={looking || !/^\d{8,14}$/.test(barcode.trim())}
@@ -137,29 +189,45 @@ export default function AddProduct() {
         </Pressable>
       </View>
       <Text style={{ color: t.faint, fontSize: 11, marginTop: 6 }}>Auto-fills name and photo from the Open Food Facts database.</Text>
+
       {field(`Selling price (${store?.currency_code ?? ''})`, price, setPrice, { kb: 'decimal-pad', ph: '0.00' })}
       {field(`Cost price (${store?.currency_code ?? ''})`, cost, setCost, { kb: 'decimal-pad', ph: '0.00 (optional)' })}
+      {margin !== null && (
+        <Text style={{ color: margin >= 0 ? t.ok : t.danger, fontSize: 12, marginTop: 6, fontWeight: '600' }}>
+          {margin >= 0 ? `${margin}% margin` : `Selling below cost (${margin}%)`}
+        </Text>
+      )}
       {field('Tax %', taxPct, setTaxPct, { kb: 'decimal-pad', ph: '0' })}
-      {field('Opening stock', stock, setStock, { kb: 'number-pad', ph: '0' })}
 
-      {err && <Text style={{ color: t.danger, marginTop: 14 }}>{err}</Text>}
+      {field('SKU / item code', sku, setSku, { ph: 'optional', caps: 'none' })}
+      <Text style={[st.label, { color: t.muted }]}>Unit</Text>
+      <View style={st.wrap}>{UNITS.map((u) => chip(u, unit === u, () => setUnit(u)))}</View>
 
-      <Pressable onPress={save} disabled={busy || !store}
-        style={[st.primary, { backgroundColor: t.accent, opacity: busy || !store ? 0.5 : 1 }]}>
-        <Text style={{ color: t.accentFg, fontWeight: '700', fontSize: 17 }}>{busy ? 'Saving…' : 'Save product'}</Text>
-      </Pressable>
-    </ScrollView>
+      {editId ? (
+        <>
+          <Text style={[st.label, { color: t.muted }]}>Stock on hand</Text>
+          <View style={[st.input, { borderColor: t.line, backgroundColor: t.surfaceAlt }]}>
+            <Text style={{ color: t.fg, fontSize: 16 }}>{currentStock ?? '…'} {unit}</Text>
+          </View>
+          <Text style={{ color: t.faint, fontSize: 11, marginTop: 6 }}>Change stock from More → Purchases / restock so every movement is recorded.</Text>
+        </>
+      ) : (
+        field('Opening stock', stock, setStock, { kb: 'number-pad', ph: '0' })
+      )}
+      {field('Low-stock alert at', lowStock, setLowStock, { kb: 'number-pad', ph: `${DEFAULT_LOW_STOCK} (default)` })}
+
+      {err && <Text style={{ color: t.danger, marginTop: space.lg }}>{err}</Text>}
+    </Screen>
   );
 }
 
 const st = StyleSheet.create({
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  scanned: { borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 8 },
-  lookup: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingHorizontal: 14 },
-  photo: { width: 120, height: 120, borderRadius: 20, borderWidth: 1 },
+  scanned: { borderWidth: 1, borderRadius: radius.md, padding: space.md },
+  lookup: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, paddingHorizontal: 14 },
+  photo: { width: 120, height: 120, borderRadius: radius.lg, borderWidth: 1 },
   photoEmpty: { alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed' },
   remove: { position: 'absolute', top: -8, right: -8, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 13, marginTop: 16, marginBottom: 6 },
-  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
-  primary: { borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 28 },
+  label: { fontSize: 13, fontWeight: '600', marginTop: space.lg, marginBottom: space.sm },
+  input: { borderWidth: 1, borderRadius: radius.md, paddingHorizontal: space.lg, paddingVertical: 13, fontSize: 16 },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

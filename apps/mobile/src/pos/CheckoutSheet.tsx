@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, Modal, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { computeCart, settlePayments, suggestCashAmounts, fromMajorString, asMinor, asBps, type Minor } from '@openpocket/pos-core';
+import { computeCart, settlePayments, suggestCashAmounts, cashSuggestionSteps, fromMajorString, asMinor, asBps, type Minor } from '@openpocket/pos-core';
 import { useCart } from '../cart';
 import { useSession, currencyOf } from '../session';
 import { useCheckoutUI } from '../checkoutUI';
@@ -20,6 +21,8 @@ const METHODS: { key: PaymentMethod; label: string; icon: keyof typeof Ionicons.
 
 export function CheckoutSheet() {
   const t = useTheme();
+  // Read outside the Modal: the Modal is its own window and reports no insets.
+  const insets = useSafeAreaInsets();
   const cart = useCart();
   const store = useSession((s) => s.store);
   const staff = useSession((s) => s.staff);
@@ -54,7 +57,7 @@ export function CheckoutSheet() {
   })();
   const enough = receivedMinor >= totals.grandTotal;
   const change = enough ? ((receivedMinor - totals.grandTotal) as Minor) : asMinor(0);
-  const suggestions = suggestCashAmounts(totals.grandTotal, [asMinor(5000), asMinor(10000), asMinor(50000), asMinor(100000)]);
+  const suggestions = suggestCashAmounts(totals.grandTotal, cashSuggestionSteps(totals.grandTotal, currency.decimals)).slice(0, 5);
   const blocked = lines.length === 0 || (isCash && !enough) || (isCredit && !customer) || busy;
 
   const reset = () => { setReceived(''); setDiscountOn(false); setDiscountPct(''); setMethod('cash'); setCustomer(null); };
@@ -85,6 +88,7 @@ export function CheckoutSheet() {
             <Pressable onPress={onClose} hitSlop={10}><Ionicons name="close" size={24} color={t.muted} /></Pressable>
           </View>
 
+          <ScrollView style={s.body} contentContainerStyle={s.bodyContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {/* customer selector */}
           <Pressable onPress={() => setPickerOpen(true)} style={[s.customer, { borderColor: t.line, backgroundColor: t.surfaceAlt }]}>
             <View style={[s.custAvatar, { backgroundColor: customer ? t.accent : t.chip }]}>
@@ -97,7 +101,7 @@ export function CheckoutSheet() {
             <Ionicons name="chevron-down" size={18} color={t.muted} />
           </Pressable>
 
-          <ScrollView style={{ maxHeight: 180 }}>
+          <View>
             {lines.map(({ product, quantity }, i) => (
               <View key={product.id} style={[s.line, { borderColor: t.line }]}>
                 <Thumb uri={product.image_uri} name={product.name} style={s.tile} textSize={12} />
@@ -114,7 +118,7 @@ export function CheckoutSheet() {
                 <Text style={{ color: t.fg, width: 82, textAlign: 'right', fontWeight: '600' }}>{money(totals.lines[i]!.lineTotal)}</Text>
               </View>
             ))}
-          </ScrollView>
+          </View>
 
           {/* summary */}
           <View style={{ marginTop: 12 }}>
@@ -140,7 +144,7 @@ export function CheckoutSheet() {
           </View>
 
           {/* payment method */}
-          <Text style={[s.label, { color: t.muted }]}>PAYMENT</Text>
+          <Text style={[s.label, { color: t.muted }]}>Payment</Text>
           <View style={s.methods}>
             {METHODS.map((m) => {
               const on = method === m.key;
@@ -156,7 +160,7 @@ export function CheckoutSheet() {
 
           {isCash && (
             <>
-              <Text style={[s.label, { color: t.muted }]}>CASH RECEIVED</Text>
+              <Text style={[s.label, { color: t.muted }]}>Cash received</Text>
               <TextInput value={received} onChangeText={setReceived} keyboardType="decimal-pad" placeholder="0.00"
                 placeholderTextColor={t.muted}
                 style={[s.input, { color: t.fg, borderColor: t.line, backgroundColor: t.bg }]} />
@@ -185,12 +189,16 @@ export function CheckoutSheet() {
             </View>
           )}
 
+          </ScrollView>
+
+          <View style={[s.footer, { borderColor: t.line, paddingBottom: 12 + insets.bottom }]}>
           <Pressable onPress={confirm} disabled={blocked}
-            style={[s.primary, { backgroundColor: t.accent, opacity: blocked ? 0.5 : 1, marginTop: isCash ? 6 : 14 }]}>
+            style={[s.primary, { backgroundColor: t.accent, opacity: blocked ? 0.5 : 1 }]}>
             <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 17 }}>
               {busy ? 'Recording…' : isCredit ? `Record credit sale · ${money(totals.grandTotal)}` : `Complete sale · ${money(totals.grandTotal)}`}
             </Text>
           </Pressable>
+          </View>
         </View>
       </KeyboardAvoidingView>
 
@@ -201,9 +209,12 @@ export function CheckoutSheet() {
 
 const s = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
-  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingTop: 10 },
+  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 10, maxHeight: '92%' },
+  body: { flexGrow: 0, flexShrink: 1 },
+  bodyContent: { paddingHorizontal: 20, paddingBottom: 8 },
+  footer: { paddingHorizontal: 20, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
   grabber: { width: 40, height: 5, borderRadius: 3, alignSelf: 'center', marginBottom: 12 },
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, paddingHorizontal: 20 },
   customer: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 14, padding: 10, marginBottom: 10 },
   custAvatar: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   creditNote: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, padding: 12, marginTop: 12 },
@@ -213,7 +224,7 @@ const s = StyleSheet.create({
   qBtn: { width: 30, height: 30, borderRadius: 8, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, marginTop: 8, paddingTop: 10 },
-  label: { fontSize: 12, fontWeight: '700', letterSpacing: 0.6, marginTop: 16, marginBottom: 8 },
+  label: { fontSize: 13, fontWeight: '600', marginTop: 16, marginBottom: 8 },
   methods: { flexDirection: 'row', gap: 10 },
   method: { flex: 1, borderWidth: 1, borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
   input: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 24, fontWeight: '700' },

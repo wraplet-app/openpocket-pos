@@ -108,7 +108,7 @@ function formatterFor(currency: CurrencyConfig): Intl.NumberFormat | null {
   }
 }
 
-/** Locale-aware formatted string, e.g. "Rs 150.75". Uses platform Intl. */
+/** Locale-aware formatted string, e.g. "$150.75". Uses platform Intl. */
 export function format(amount: Minor, currency: CurrencyConfig): string {
   const major = toMajorNumber(amount, currency.decimals);
   const f = formatterFor(currency);

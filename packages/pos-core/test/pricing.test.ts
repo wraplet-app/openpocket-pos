@@ -6,6 +6,7 @@ import {
   computeLine,
   settlePayments,
   suggestCashAmounts,
+  cashSuggestionSteps,
 } from '../src/pricing.ts';
 import { lineProfit } from '../src/profit.ts';
 
@@ -123,7 +124,7 @@ test('settlePayments: insufficient throws unless underpayment allowed', () => {
 });
 
 test('suggestCashAmounts rounds up to denominations', () => {
-  // total 137.00 (13700 minor), steps Rs 50/100/200
+  // total 137.00 (13700 minor), steps 50/100/200
   const s = suggestCashAmounts(asMinor(13700), [asMinor(5000), asMinor(10000), asMinor(20000)]);
   assert.deepEqual(s, [13700, 15000, 20000]);
 });
@@ -137,4 +138,19 @@ test('lineProfit uses cost snapshot and net-of-discount revenue', () => {
     discount: { kind: 'percent', bps: asBps(1000) },
   });
   assert.equal(p, 40500 - 30000);
+});
+
+test('cashSuggestionSteps + suggestCashAmounts give sensible buttons in USD-like currencies', () => {
+  // $14.36 -> exact, then $15, $20, $50, $100
+  const total = asMinor(1436);
+  const s = suggestCashAmounts(total, cashSuggestionSteps(total, 2));
+  assert.deepEqual(s, [1436, 1500, 2000, 5000, 10000]);
+});
+
+test('cashSuggestionSteps scales up for large totals and respects zero-decimal currencies', () => {
+  const big = asMinor(183500); // 1,835.00
+  const steps = cashSuggestionSteps(big, 2).map((x) => x / 100);
+  assert.ok(steps.includes(500) && steps.includes(1000));
+  const yen = cashSuggestionSteps(asMinor(1280), 0); // 1,280 in a 0-decimal currency
+  assert.deepEqual(yen.slice(0, 3), [1, 5, 10]);
 });
