@@ -45,6 +45,12 @@ adb shell am start -a android.intent.action.VIEW \
   -d "openpocketpos://expo-development-client/?url=http%3A%2F%2F10.0.2.2%3A8081" io.openpocket.pos
 ```
 
+**Seed demo data (one tap):** on a fresh install, the setup screen shows a
+**"Load demo shop (dev)"** button (dev builds only). It creates a full demo
+store — 10 products, 2 staff (**owner PIN 1234**, **cashier PIN 5678**), 3
+customers and a mix of cash/card/credit sales — via `apps/mobile/src/seed.ts`.
+Handy for exploring the app immediately after cloning.
+
 > **Windows note:** the repo must live at a short path (e.g. `C:\opos`). Deep
 > paths blow past Windows' path limit during the Android build. `.npmrc` sets
 > `node-linker=hoisted` for RN compatibility.

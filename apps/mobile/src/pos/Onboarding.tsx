@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, Pressable, Animated, useWindowDimensions,
-  useColorScheme, StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
+  useColorScheme, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { createStore } from '../repos';
+import { seedDemoData } from '../seed';
 import { useTheme, type Theme } from '../theme';
 
 const LOCALE: Record<string, string> = {
@@ -111,6 +112,19 @@ function SetupForm({ t, insets, onCreated }: { t: Theme; insets: { top: number; 
     } finally { setBusy(false); }
   };
 
+  // Dev-only: one-tap demo store (products, staff, customers, sales).
+  const seed = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await seedDemoData();
+      onCreated();
+    } catch (e) {
+      Alert.alert('Could not load demo', e instanceof Error ? e.message : String(e));
+      setBusy(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + 48, paddingHorizontal: 28, paddingBottom: 40, flexGrow: 1 }}>
@@ -139,6 +153,12 @@ function SetupForm({ t, insets, onCreated }: { t: Theme; insets: { top: number; 
         <Pressable onPress={create} disabled={!name.trim() || busy} style={[o.next, { backgroundColor: t.accent, opacity: !name.trim() || busy ? 0.5 : 1, marginTop: 32, alignSelf: 'stretch' }]}>
           <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 17 }}>{busy ? 'Creating…' : 'Create store'}</Text>
         </Pressable>
+
+        {__DEV__ && (
+          <Pressable onPress={seed} disabled={busy} style={{ marginTop: 16, alignSelf: 'center' }} hitSlop={10}>
+            <Text style={{ color: t.muted, fontWeight: '600' }}>Load demo shop (dev)</Text>
+          </Pressable>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
