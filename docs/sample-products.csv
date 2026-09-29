@@ -1,0 +1,11 @@
+name,barcode,selling_price,cost_price,tax_percent,stock
+Coca-Cola 500ml,8901001,50,38,0,60
+Sprite 500ml,8901002,50,38,0,40
+Lays Chips,8901003,30,22,5,80
+Dairy Milk,8901004,120,95,5,35
+Nestle Water 1.5L,8901005,60,45,0,50
+Sunflower Oil 1L,8901006,420,380,0,20
+Tapal Tea 250g,8901007,320,280,5,25
+Sooper Biscuits,8901008,40,30,5,100
+Colgate 100g,8901009,180,150,17,18
+Shan Masala 50g,8901010,90,72,5,30

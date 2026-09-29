@@ -1,0 +1,23 @@
+node_modules/
+dist/
+build/
+.turbo/
+coverage/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Expo / RN (for apps/mobile, added in the next slice)
+.expo/
+*.tsbuildinfo
+android/
+ios/
+
+# local test server db
+.data/
+
+# session debug artifacts (root-level screenshots + scratch CSVs)
+/*.png
+/*.csv

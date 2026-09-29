@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "OpenPocket POS",
+    "slug": "openpocket-pos",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "openpocketpos",
+    "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
+    "newArchEnabled": true,
+    "android": {
+      "package": "io.openpocket.pos",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#0f1115"
+      }
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "io.openpocket.pos"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "OpenPocket POS uses the camera to scan product barcodes."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "OpenPocket POS uses your photos to set product images.",
+          "cameraPermission": "OpenPocket POS uses the camera to take product photos."
+        }
+      ],
+      "expo-image",
+      "expo-sharing"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

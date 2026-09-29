@@ -1,0 +1,21 @@
+{
+  "name": "openpocket-sync",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker + D1 sync backend for OpenPocket POS",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create openpocket-production",
+    "db:schema": "wrangler d1 execute openpocket-production --remote --file=./schema.sql",
+    "db:schema:local": "wrangler d1 execute openpocket-production --local --file=./schema.sql"
+  },
+  "dependencies": {
+    "@openpocket/database": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
+    "wrangler": "^3.80.0"
+  }
+}

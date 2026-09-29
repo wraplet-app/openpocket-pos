@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpenPocket POS — local test</title>
+<style>
+  :root {
+    --bg:#0f1115; --panel:#181b22; --line:#272b34; --fg:#e8eaed; --muted:#9aa0aa;
+    --accent:#3b82f6; --accent-fg:#fff; --ok:#22c55e; --chip:#222732;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font:16px/1.4 system-ui,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--fg); }
+  header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--line); }
+  header b { font-size:18px; }
+  header span { color:var(--muted); font-size:13px; }
+  .wrap { display:grid; grid-template-columns:1fr 360px; gap:16px; padding:16px; max-width:1100px; margin:0 auto; }
+  @media (max-width:820px){ .wrap { grid-template-columns:1fr; } }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:0 0 10px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
+  .prod { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; text-align:left; cursor:pointer; color:var(--fg); transition:.08s; min-height:92px; display:flex; flex-direction:column; justify-content:space-between; }
+  .prod:hover { border-color:var(--accent); }
+  .prod:active { transform:scale(.97); }
+  .prod .n { font-weight:600; }
+  .prod .p { color:var(--accent); font-weight:700; margin-top:6px; }
+  .prod .s { color:var(--muted); font-size:12px; }
+  .prod[disabled] { opacity:.4; cursor:not-allowed; }
+  .cart { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; position:sticky; top:16px; }
+  .line { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); }
+  .line .nm { flex:1; }
+  .line .qty { display:flex; align-items:center; gap:8px; }
+  .qbtn { width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--chip); color:var(--fg); font-size:18px; cursor:pointer; }
+  .line .lt { width:92px; text-align:right; font-variant-numeric:tabular-nums; }
+  .totals { margin-top:14px; font-variant-numeric:tabular-nums; }
+  .totals div { display:flex; justify-content:space-between; padding:3px 0; color:var(--muted); }
+  .totals .grand { color:var(--fg); font-size:22px; font-weight:800; padding-top:8px; border-top:1px solid var(--line); margin-top:6px; }
+  label { display:block; color:var(--muted); font-size:13px; margin:14px 0 6px; }
+  input { width:100%; padding:12px; font-size:20px; border-radius:10px; border:1px solid var(--line); background:#0c0e12; color:var(--fg); font-variant-numeric:tabular-nums; }
+  .quick { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .quick button { background:var(--chip); border:1px solid var(--line); color:var(--fg); border-radius:8px; padding:8px 10px; cursor:pointer; }
+  .pay { width:100%; margin-top:14px; padding:16px; font-size:18px; font-weight:700; border:0; border-radius:12px; background:var(--accent); color:var(--accent-fg); cursor:pointer; }
+  .pay:disabled { opacity:.4; cursor:not-allowed; }
+  .change { margin-top:10px; text-align:center; font-size:15px; }
+  .change b { color:var(--ok); }
+  .empty { color:var(--muted); padding:20px 0; text-align:center; }
+  dialog { border:1px solid var(--line); border-radius:16px; background:var(--panel); color:var(--fg); padding:0; max-width:340px; width:92%; }
+  .receipt { padding:22px; font-variant-numeric:tabular-nums; }
+  .receipt h3 { margin:0 0 2px; }
+  .receipt .muted { color:var(--muted); font-size:13px; margin-bottom:14px; }
+  .receipt .r { display:flex; justify-content:space-between; padding:3px 0; }
+  .receipt hr { border:0; border-top:1px dashed var(--line); margin:10px 0; }
+  .receipt .big { font-size:20px; font-weight:800; }
+  .receipt button { width:100%; margin-top:16px; padding:14px; border:0; border-radius:10px; background:var(--ok); color:#04210f; font-weight:700; font-size:16px; cursor:pointer; }
+</style>
+</head>
+<body>
+<header>
+  <b>🛒 <span id="storeName">OpenPocket POS</span></b>
+  <span id="salesCount"></span>
+</header>
+<div class="wrap">
+  <section>
+    <h2>Products — tap to add</h2>
+    <div class="grid" id="products"></div>
+  </section>
+  <aside>
+    <div class="cart">
+      <h2>Cart</h2>
+      <div id="lines"><div class="empty">Cart is empty</div></div>
+      <div class="totals" id="totals"></div>
+      <label>Cash received</label>
+      <input id="received" type="number" inputmode="decimal" placeholder="0.00" />
+      <div class="quick" id="quick"></div>
+      <div class="change" id="change"></div>
+      <button class="pay" id="pay" disabled>Charge</button>
+    </div>
+  </aside>
+</div>
+
+<dialog id="rdlg"><div class="receipt" id="rbody"></div></dialog>
+
+<script>
+const S = { products: [], cart: new Map(), currency: { decimals: 2, code: 'PKR' } };
+const minor = (major) => Math.round(major * 10 ** S.currency.decimals);
+const major = (m) => m / 10 ** S.currency.decimals;
+const fmt = (m) => new Intl.NumberFormat('en-PK', { style:'currency', currency:S.currency.code, minimumFractionDigits:S.currency.decimals }).format(major(m));
+
+async function load() {
+  const st = await (await fetch('/api/state')).json();
+  S.products = st.products; S.currency = st.currency;
+  document.getElementById('storeName').textContent = st.store;
+  document.getElementById('salesCount').textContent = st.salesCount + ' sales recorded';
+  renderProducts(); renderCart();
+}
+
+function renderProducts() {
+  const el = document.getElementById('products');
+  el.innerHTML = '';
+  for (const p of S.products) {
+    const b = document.createElement('button');
+    b.className = 'prod';
+    b.disabled = p.stock <= (S.cart.get(p.id)?.quantity || 0);
+    b.innerHTML = `<div><div class="n">${p.name}</div><div class="s">stock ${p.stock}${p.taxBps? ' · '+(p.taxBps/100)+'% tax':''}</div></div><div class="p">${p.priceLabel}</div>`;
+    b.onclick = () => addToCart(p);
+    el.appendChild(b);
+  }
+}
+
+function addToCart(p) {
+  const cur = S.cart.get(p.id) || { product: p, quantity: 0 };
+  if (cur.quantity >= p.stock) return;
+  cur.quantity++; S.cart.set(p.id, cur);
+  renderProducts(); renderCart();
+}
+function setQty(id, q) {
+  const c = S.cart.get(id); if (!c) return;
+  c.quantity = Math.max(0, Math.min(q, c.product.stock));
+  if (c.quantity === 0) S.cart.delete(id);
+  renderProducts(); renderCart();
+}
+
+// Mirror of pos-core line math for live display only; the server recomputes
+// authoritatively with @openpocket/pos-core at checkout.
+function preview() {
+  let subtotal = 0, tax = 0, grand = 0;
+  for (const { product, quantity } of S.cart.values()) {
+    const gross = product.price * quantity;
+    const t = Math.round((gross * product.taxBps) / 10000);
+    subtotal += gross; tax += t; grand += gross + t;
+  }
+  return { subtotal, tax, grand };
+}
+
+function renderCart() {
+  const linesEl = document.getElementById('lines');
+  if (S.cart.size === 0) { linesEl.innerHTML = '<div class="empty">Cart is empty</div>'; }
+  else {
+    linesEl.innerHTML = '';
+    for (const { product, quantity } of S.cart.values()) {
+      const row = document.createElement('div');
+      row.className = 'line';
+      const lt = product.price * quantity + Math.round((product.price*quantity*product.taxBps)/10000);
+      row.innerHTML = `<div class="nm">${product.name}<br><span class="s" style="color:var(--muted);font-size:12px">${fmt(product.price)}</span></div>
+        <div class="qty"><button class="qbtn">−</button><b>${quantity}</b><button class="qbtn">＋</button></div>
+        <div class="lt">${fmt(lt)}</div>`;
+      const [minus, plus] = row.querySelectorAll('.qbtn');
+      minus.onclick = () => setQty(product.id, quantity - 1);
+      plus.onclick = () => setQty(product.id, quantity + 1);
+      linesEl.appendChild(row);
+    }
+  }
+  const t = preview();
+  document.getElementById('totals').innerHTML =
+    `<div><span>Subtotal</span><span>${fmt(t.subtotal)}</span></div>
+     <div><span>Tax</span><span>${fmt(t.tax)}</span></div>
+     <div class="grand"><span>Total</span><span>${fmt(t.grand)}</span></div>`;
+  renderQuick(t.grand);
+  updateChange();
+}
+
+function renderQuick(grand) {
+  const el = document.getElementById('quick'); el.innerHTML = '';
+  if (S.cart.size === 0) return;
+  const steps = [minor(50), minor(100), minor(500), minor(1000)];
+  const set = new Set([grand]);
+  for (const s of steps) { const r = Math.ceil(grand/s)*s; if (r>grand) set.add(r); }
+  [...set].sort((a,b)=>a-b).slice(0,4).forEach((amt) => {
+    const b = document.createElement('button');
+    b.textContent = fmt(amt);
+    b.onclick = () => { document.getElementById('received').value = major(amt).toFixed(S.currency.decimals); updateChange(); };
+    el.appendChild(b);
+  });
+}
+
+function updateChange() {
+  const grand = preview().grand;
+  const recv = minor(parseFloat(document.getElementById('received').value || '0'));
+  const changeEl = document.getElementById('change');
+  const payBtn = document.getElementById('pay');
+  if (S.cart.size === 0) { changeEl.textContent=''; payBtn.disabled=true; return; }
+  if (recv >= grand) { changeEl.innerHTML = `Change <b>${fmt(recv-grand)}</b>`; payBtn.disabled=false; }
+  else { changeEl.innerHTML = `<span style="color:#f87171">Short ${fmt(grand-recv)}</span>`; payBtn.disabled=true; }
+}
+document.getElementById('received').addEventListener('input', updateChange);
+
+document.getElementById('pay').onclick = async () => {
+  const items = [...S.cart.values()].map(({ product, quantity }) => ({ productId: product.id, quantity }));
+  const received = minor(parseFloat(document.getElementById('received').value || '0'));
+  const res = await fetch('/api/checkout', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ items, received }) });
+  const data = await res.json();
+  if (data.error) { alert(data.error); return; }
+  showReceipt(data.receipt);
+  S.products = data.state.products; S.currency = data.state.currency;
+  document.getElementById('salesCount').textContent = data.state.salesCount + ' sales recorded';
+  S.cart.clear(); document.getElementById('received').value = '';
+  renderProducts(); renderCart();
+};
+
+function showReceipt(r) {
+  const rows = r.lines.map(l => `<div class="r"><span>${l.name} ×${l.quantity}</span><span>${l.lineTotal}</span></div>`).join('');
+  document.getElementById('rbody').innerHTML =
+    `<h3>Test Mart</h3><div class="muted">${r.invoiceNo} · ${new Date().toLocaleString()}</div>
+     ${rows}<hr>
+     <div class="r"><span>Subtotal</span><span>${r.subtotal}</span></div>
+     <div class="r"><span>Tax</span><span>${r.tax}</span></div>
+     <div class="r big"><span>Total</span><span>${r.total}</span></div><hr>
+     <div class="r"><span>Cash</span><span>${r.received}</span></div>
+     <div class="r"><span>Change</span><span>${r.change}</span></div>
+     <button id="rclose">Done</button>`;
+  const dlg = document.getElementById('rdlg'); dlg.showModal();
+  document.getElementById('rclose').onclick = () => dlg.close();
+}
+
+load();
+</script>
+</body>
+</html>
