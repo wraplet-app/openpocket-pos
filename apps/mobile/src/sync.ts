@@ -20,6 +20,44 @@ import { getStore } from './repos';
 
 const OVERLAP_MS = 30_000;
 
+/**
+ * The hosted sync backend. After you deploy the Worker (see
+ * apps/sync-worker/DEPLOY.md), paste its URL here — e.g.
+ * 'https://openpocket-sync.<your-subdomain>.workers.dev' — and users get
+ * one-tap cloud backup with no URL or token to type. Empty string keeps only
+ * the manual / self-host flow (enter your own server URL + token).
+ */
+export const DEFAULT_SYNC_URL = '';
+
+/** True when this build ships a hosted backend, so the one-tap flow is offered. */
+export function hasHostedSync(): boolean { return DEFAULT_SYNC_URL.trim().length > 0; }
+
+// Crockford-ish base32 with ambiguous characters (0/O, 1/I/L) removed, so a
+// shop code is easy to read aloud and type on a second device.
+const CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+/**
+ * A shop's sync secret: shown to the user as a shareable code and sent to the
+ * server as the bearer token. Stored without dashes; displayed grouped.
+ * ponytail: Math.random, ~80 bits. Swap to expo-crypto getRandomBytes together
+ * with server-side entitlement enforcement, before the public launch.
+ */
+export function newShopCode(): string {
+  let s = '';
+  for (let i = 0; i < 16; i++) s += CODE_ALPHABET[(Math.random() * CODE_ALPHABET.length) | 0];
+  return s;
+}
+
+/** Strip spaces/dashes and upper-case, so both devices send the same token. */
+export function normalizeCode(code: string): string {
+  return code.replace(/[^0-9a-zA-Z]/g, '').toUpperCase();
+}
+
+/** Group a stored token into XXXX-XXXX… for display. */
+export function formatCode(token: string): string {
+  return normalizeCode(token).match(/.{1,4}/g)?.join('-') ?? token;
+}
+
 export interface SyncState {
   server_url: string | null;
   token: string | null;
@@ -132,6 +170,29 @@ export async function syncNow(): Promise<SyncResult> {
     [pushedCursor, pulledCursor, at],
   );
   return { pushedCursor, pulledCursor, at };
+}
+
+/** One-tap: pick/keep this shop's code, point at the hosted backend, and sync. */
+export async function turnOnCloudBackup(): Promise<SyncResult> {
+  if (!hasHostedSync()) throw new Error('Hosted cloud backup is not set up in this build.');
+  const state = await getSyncState();
+  const token = state.token ?? newShopCode();
+  await saveSyncConfig(DEFAULT_SYNC_URL, token);
+  return syncNow();
+}
+
+/** Link this device to an existing shop using its code (destructive: replaces local data). */
+export async function linkDeviceByCode(code: string): Promise<number> {
+  if (!hasHostedSync()) throw new Error('Hosted cloud backup is not set up in this build.');
+  const token = normalizeCode(code);
+  if (token.length < 12) throw new Error('That code looks too short — check it and try again.');
+  return restoreFromCloud(DEFAULT_SYNC_URL, token);
+}
+
+/** This shop's code (formatted for display), or null if backup isn't on yet. */
+export async function getShopCode(): Promise<string | null> {
+  const s = await getSyncState();
+  return s.token ? formatCode(s.token) : null;
 }
 
 /**
