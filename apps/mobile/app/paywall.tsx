@@ -47,7 +47,7 @@ export default function Paywall() {
   };
 
   return (
-    <Screen title="Go online" subtitle="Cloud backup & multi-device sync">
+    <Screen title="Cloud backup" subtitle="Back up & sync across your devices">
       <View style={[s.hero, { backgroundColor: t.accent }]}>
         <Ionicons name="cloud-outline" size={40} color={t.accentFg} />
         <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 24, marginTop: 10 }}>{priceLabel}</Text>

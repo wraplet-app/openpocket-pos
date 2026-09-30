@@ -74,7 +74,7 @@ export default function CloudSync() {
     if (!url.trim() || !token.trim()) { showAlert('Missing details', 'Enter both the server URL and a token.'); return; }
     await saveSyncConfig(url, token);
     await syncNow();
-    showAlert('Synced', 'Cloud sync is on. Last synced just now.');
+    showAlert('Synced', 'Cloud backup is on. Last synced just now.');
   });
   const restore = () => {
     if (!url.trim() || !token.trim()) { showAlert('Missing details', 'Enter the server URL and the token from your other device.'); return; }

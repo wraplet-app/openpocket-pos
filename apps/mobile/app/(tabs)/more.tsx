@@ -84,7 +84,7 @@ export default function More() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ color: t.fg, fontWeight: '800', fontSize: 15 }}>
-                {cloud.active ? 'Cloud sync · Active' : 'Go online · $2/month'}
+                {cloud.active ? 'Cloud backup · Active' : 'Cloud backup · $2/month'}
               </Text>
               <Text style={{ color: t.muted, fontSize: 13, marginTop: 1 }}>
                 {cloud.active ? 'Your shop is backed up & syncing' : 'Back up & sync your shop across devices'}

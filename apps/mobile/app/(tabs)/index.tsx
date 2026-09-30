@@ -80,7 +80,7 @@ export default function Home() {
               <Ionicons name="cloud-upload-outline" size={22} color={t.accentFg} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: t.fg, fontWeight: '800', fontSize: 15 }}>Go online · $2/month</Text>
+              <Text style={{ color: t.fg, fontWeight: '800', fontSize: 15 }}>Cloud backup · $2/month</Text>
               <Text style={{ color: t.muted, fontSize: 13, marginTop: 1 }}>Back up & sync your shop across devices</Text>
             </View>
             <View style={[s.upgradeCta, { backgroundColor: t.accent }]}>
