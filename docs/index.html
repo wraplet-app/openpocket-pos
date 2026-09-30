@@ -7,257 +7,339 @@
 <title>OpenPocket POS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap">
 <style>
-  /* Layout: fixed top nav; centered content column; a phone-screenshot fan in the hero;
-     feature grid; screenshot rail; two-tier pricing; footer. One emerald accent throughout. */
+  /* Layout: sticky glass nav; asymmetric hero (copy + a framed phone floating over an
+     emerald glow); facts strip; a spotlight billing row; bento icon grid; framed
+     screenshot trio; two-tier pricing; open-source strip; footer. Dark-first product feel. */
   :root {
-    --bg: #f4f7f5;
+    --bg: #f5f8f6;
+    --bg-2: #eef3f0;
     --surface: #ffffff;
-    --fg: #0d1512;
-    --muted: #5b6b63;
-    --faint: #8a998f;
-    --line: #e2e9e4;
-    --accent: #0fa678;
-    --accent-deep: #0b7d5b;
+    --fg: #0c1512;
+    --muted: #566b62;
+    --faint: #869a8f;
+    --line: #e4ebe6;
+    --accent: #0e9d72;
+    --accent-2: #14b884;
+    --accent-deep: #0a7a58;
     --accent-fg: #ffffff;
-    --accent-soft: #e3f4ee;
-    --shadow: 0 18px 40px -24px rgba(9, 60, 44, 0.45);
+    --accent-soft: #e4f4ee;
+    --glow: rgba(20, 184, 132, 0.22);
+    --frame: linear-gradient(155deg, #d7e0da, #aab8b0);
+    --shadow-lg: 0 44px 90px -38px rgba(8, 45, 33, 0.42);
+    --shadow-sm: 0 10px 30px -18px rgba(8, 45, 33, 0.4);
     --display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
     --body: "Instrument Sans", system-ui, -apple-system, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0a120f;
-      --surface: #121b17;
-      --fg: #eaf2ed;
-      --muted: #9db0a6;
-      --faint: #6f8177;
-      --line: #22302a;
-      --accent: #22c08a;
-      --accent-deep: #12a374;
-      --accent-fg: #04120c;
-      --accent-soft: #16241d;
-      --shadow: 0 18px 44px -24px rgba(0, 0, 0, 0.7);
+      --bg: #070d0b;
+      --bg-2: #0b1310;
+      --surface: #101a15;
+      --fg: #e9f2ed;
+      --muted: #9bb0a6;
+      --faint: #6a7d74;
+      --line: #1e2b25;
+      --accent: #22c48d;
+      --accent-2: #38e0a3;
+      --accent-deep: #14b884;
+      --accent-fg: #041a12;
+      --accent-soft: #14231c;
+      --glow: rgba(34, 196, 141, 0.28);
+      --frame: linear-gradient(155deg, #2b332e, #050807);
+      --shadow-lg: 0 44px 90px -38px rgba(0, 0, 0, 0.75);
+      --shadow-sm: 0 12px 34px -20px rgba(0, 0, 0, 0.7);
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #0a120f;
-    --surface: #121b17;
-    --fg: #eaf2ed;
-    --muted: #9db0a6;
-    --faint: #6f8177;
-    --line: #22302a;
-    --accent: #22c08a;
-    --accent-deep: #12a374;
-    --accent-fg: #04120c;
-    --accent-soft: #16241d;
-    --shadow: 0 18px 44px -24px rgba(0, 0, 0, 0.7);
+    --bg: #070d0b;
+    --bg-2: #0b1310;
+    --surface: #101a15;
+    --fg: #e9f2ed;
+    --muted: #9bb0a6;
+    --faint: #6a7d74;
+    --line: #1e2b25;
+    --accent: #22c48d;
+    --accent-2: #38e0a3;
+    --accent-deep: #14b884;
+    --accent-fg: #041a12;
+    --accent-soft: #14231c;
+    --glow: rgba(34, 196, 141, 0.28);
+    --frame: linear-gradient(155deg, #2b332e, #050807);
+    --shadow-lg: 0 44px 90px -38px rgba(0, 0, 0, 0.75);
+    --shadow-sm: 0 12px 34px -20px rgba(0, 0, 0, 0.7);
     color-scheme: dark;
   }
 
   * { box-sizing: border-box; }
   body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--fg);
-    font-family: var(--body);
-    font-size: 17px;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: var(--body); font-size: 17px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
   }
-  h1, h2, h3 { font-family: var(--display); font-weight: 800; line-height: 1.05; margin: 0; text-wrap: balance; letter-spacing: -0.02em; }
-  a { color: inherit; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 800; line-height: 1.04; margin: 0; text-wrap: balance; letter-spacing: -0.025em; }
+  a { color: inherit; text-decoration: none; }
   img { max-width: 100%; display: block; }
+  .wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding-inline: 22px; }
+  .accent-text { color: var(--accent-deep); }
+  :root[data-theme="dark"] .accent-text, :root:not([data-theme="light"]) .accent-text { color: var(--accent-2); }
 
-  .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-inline: 20px; }
+  /* ---- Phone frame ---- */
+  .device { position: relative; border-radius: 34px; padding: 7px; background: var(--frame); box-shadow: var(--shadow-lg), inset 0 0 0 1px rgba(255,255,255,0.08); }
+  .device .screen { border-radius: 28px; overflow: hidden; background: #000; line-height: 0; }
+  .device .screen img { width: 100%; }
 
-  /* Nav */
-  .nav {
-    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    backdrop-filter: saturate(1.4) blur(12px);
-    border-bottom: 1px solid var(--line);
-  }
-  .nav-in { display: flex; align-items: center; gap: 16px; height: 64px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: -0.02em; }
-  .logo { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); display: grid; place-items: center; color: var(--accent-fg); box-shadow: var(--shadow); }
-  .logo svg { width: 18px; height: 18px; }
-  .nav-links { margin-left: auto; display: flex; align-items: center; gap: 22px; }
-  .nav-links a { color: var(--muted); text-decoration: none; font-weight: 500; font-size: 15px; }
-  .nav-links a:hover { color: var(--fg); }
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+  /* ---- Buttons ---- */
+  .btn { display: inline-flex; align-items: center; gap: 9px; justify-content: center;
     background: var(--accent); color: var(--accent-fg); font-weight: 700; font-family: var(--body);
-    border: none; border-radius: 12px; padding: 11px 18px; font-size: 15px; text-decoration: none;
-    box-shadow: var(--shadow); cursor: pointer; transition: transform .12s ease, background .12s ease;
-  }
-  .btn:hover { transform: translateY(-1px); background: var(--accent-deep); }
+    border: none; border-radius: 13px; padding: 13px 20px; font-size: 15.5px;
+    box-shadow: var(--shadow-sm); cursor: pointer; transition: transform .14s ease, filter .14s ease; }
+  .btn:hover { transform: translateY(-2px); filter: brightness(1.06); }
   .btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); box-shadow: none; }
-  .btn.ghost:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
-  @media (max-width: 640px) { .nav-links .lnk { display: none; } }
+  .btn.ghost:hover { border-color: var(--accent); color: var(--accent-deep); filter: none; }
+  :root[data-theme="dark"] .btn.ghost:hover, :root:not([data-theme="light"]) .btn.ghost:hover { color: var(--accent-2); }
+  .btn svg { width: 18px; height: 18px; }
 
-  /* Hero */
-  .hero { padding-block: clamp(48px, 8vw, 96px) clamp(32px, 5vw, 56px); }
-  .eyebrow {
-    display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px;
-    letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent-deep);
-    background: var(--accent-soft); padding: 6px 12px; border-radius: 999px; margin-bottom: 22px;
-  }
-  :root[data-theme="dark"] .eyebrow, :root:not([data-theme="light"]) .eyebrow { color: var(--accent); }
-  .hero h1 { font-size: clamp(38px, 7vw, 68px); max-width: 15ch; }
-  .hero p.lead { font-size: clamp(17px, 2.4vw, 21px); color: var(--muted); max-width: 46ch; margin-top: 20px; }
-  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; align-items: center; }
-  .hero-note { color: var(--faint); font-size: 14px; margin-top: 16px; }
-  .hero-note strong { color: var(--fg); font-weight: 600; }
+  /* ---- Nav ---- */
+  .nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30;
+    background: color-mix(in srgb, var(--bg) 78%, transparent); backdrop-filter: saturate(1.5) blur(14px);
+    border-bottom: 1px solid transparent; transition: border-color .2s; }
+  .nav.scrolled { border-bottom-color: var(--line); }
+  .nav-in { display: flex; align-items: center; gap: 16px; height: 66px; }
+  .brand { display: flex; align-items: center; gap: 11px; font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; }
+  .logo { width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(150deg, var(--accent-2), var(--accent-deep)); display: grid; place-items: center; color: #fff; box-shadow: var(--shadow-sm); }
+  .logo svg { width: 19px; height: 19px; }
+  .nav-links { margin-left: auto; display: flex; align-items: center; gap: 24px; }
+  .nav-links a.lnk { color: var(--muted); font-weight: 500; font-size: 15px; }
+  .nav-links a.lnk:hover { color: var(--fg); }
+  @media (max-width: 680px) { .nav-links .lnk { display: none; } }
 
-  /* Phone fan */
-  .fan { margin-top: clamp(40px, 6vw, 64px); display: flex; justify-content: center; gap: clamp(-40px, -3vw, 18px); perspective: 1400px; }
-  .phone {
-    width: clamp(150px, 26vw, 230px); border-radius: 26px; border: 1px solid var(--line);
-    background: var(--surface); box-shadow: var(--shadow); overflow: hidden; flex: none;
-    transition: transform .3s ease;
-  }
-  .phone img { width: 100%; }
-  .phone.a { transform: rotate(-6deg) translateY(14px); }
-  .phone.b { transform: translateY(-8px) scale(1.04); z-index: 2; }
-  .phone.c { transform: rotate(6deg) translateY(14px); }
-  .fan:hover .phone.a { transform: rotate(-8deg) translateY(6px); }
-  .fan:hover .phone.c { transform: rotate(8deg) translateY(6px); }
-  @media (max-width: 560px) { .phone.a, .phone.c { display: none; } .phone.b { width: 250px; transform: none; } }
+  /* ---- Hero ---- */
+  .hero { position: relative; padding-block: clamp(46px, 7vw, 92px) clamp(40px, 6vw, 80px); overflow: hidden; }
+  .hero::before { content: ""; position: absolute; top: -12%; right: -6%; width: min(760px, 90vw); height: 760px;
+    background: radial-gradient(circle at center, var(--glow), transparent 62%); z-index: 0; pointer-events: none; }
+  .hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: clamp(28px, 4vw, 56px); align-items: center; }
+  @media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr; text-align: center; } }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 12.5px;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-deep);
+    background: var(--accent-soft); padding: 7px 13px; border-radius: 999px; margin-bottom: 22px; }
+  :root[data-theme="dark"] .eyebrow, :root:not([data-theme="light"]) .eyebrow { color: var(--accent-2); }
+  .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent); }
+  .hero h1 { font-size: clamp(40px, 6.6vw, 72px); }
+  .hero h1 em { font-style: normal; color: var(--accent-deep); }
+  :root[data-theme="dark"] .hero h1 em, :root:not([data-theme="light"]) .hero h1 em { color: var(--accent-2); }
+  .hero p.lead { font-size: clamp(17px, 2.2vw, 20.5px); color: var(--muted); max-width: 44ch; margin: 22px 0 0; }
+  @media (max-width: 860px) { .hero p.lead { margin-inline: auto; } }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+  @media (max-width: 860px) { .hero-cta { justify-content: center; } }
+  .hero-note { color: var(--faint); font-size: 14px; margin-top: 18px; display: flex; align-items: center; gap: 8px; }
+  @media (max-width: 860px) { .hero-note { justify-content: center; } }
+  .hero-note b { color: var(--fg); font-weight: 600; }
 
-  /* Trust bar */
-  .facts { display: flex; flex-wrap: wrap; gap: 12px 40px; justify-content: center; padding-block: 36px; border-block: 1px solid var(--line); margin-top: clamp(40px, 6vw, 72px); }
-  .fact { text-align: center; }
-  .fact b { font-family: var(--display); font-size: 28px; display: block; color: var(--accent-deep); }
-  :root[data-theme="dark"] .fact b, :root:not([data-theme="light"]) .fact b { color: var(--accent); }
-  .fact span { font-size: 13.5px; color: var(--muted); }
+  .hero-visual { position: relative; display: flex; justify-content: center; }
+  .hero-visual .device.main { width: min(300px, 74vw); }
+  .hero-visual .device.peek { position: absolute; width: min(190px, 46vw); right: -4%; bottom: -8%; transform: rotate(6deg); opacity: .96; }
+  @media (max-width: 860px) { .hero-visual .device.peek { display: none; } }
+  @media (max-width: 380px) { .hero-visual .device.main { width: 86vw; } }
+  .price-chip { position: absolute; top: 8%; left: -6%; z-index: 3; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 15px; padding: 11px 15px; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 10px; }
+  @media (max-width: 860px) { .price-chip { left: 2%; } }
+  .price-chip .pc-ic { width: 34px; height: 34px; border-radius: 10px; background: var(--accent-soft); color: var(--accent-deep); display: grid; place-items: center; }
+  :root[data-theme="dark"] .price-chip .pc-ic, :root:not([data-theme="light"]) .price-chip .pc-ic { color: var(--accent-2); }
+  .price-chip b { font-family: var(--display); font-size: 16px; display: block; line-height: 1.1; }
+  .price-chip span { font-size: 12px; color: var(--muted); }
 
-  /* Sections */
-  section.block { padding-block: clamp(56px, 9vw, 104px); }
-  .section-head { max-width: 34ch; margin-bottom: 44px; }
-  .section-head h2 { font-size: clamp(28px, 4.5vw, 44px); }
-  .section-head p { color: var(--muted); margin-top: 14px; font-size: 18px; }
+  /* ---- Facts ---- */
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: clamp(44px, 6vw, 72px); }
+  @media (max-width: 620px) { .facts { grid-template-columns: repeat(2, 1fr); } }
+  .fact { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; text-align: center; }
+  .fact b { font-family: var(--display); font-size: clamp(24px, 3.6vw, 32px); display: block; color: var(--accent-deep); letter-spacing: -0.03em; }
+  :root[data-theme="dark"] .fact b, :root:not([data-theme="light"]) .fact b { color: var(--accent-2); }
+  .fact span { font-size: 13px; color: var(--muted); }
 
-  /* Feature grid */
+  /* ---- Sections ---- */
+  section.block { padding-block: clamp(56px, 9vw, 108px); }
+  .kicker { font-weight: 600; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-deep); }
+  :root[data-theme="dark"] .kicker, :root:not([data-theme="light"]) .kicker { color: var(--accent-2); }
+  .section-head { max-width: 40ch; margin-bottom: 46px; }
+  .section-head h2 { font-size: clamp(29px, 4.6vw, 46px); margin-top: 12px; }
+  .section-head p { color: var(--muted); margin-top: 15px; font-size: 18px; }
+
+  /* ---- Spotlight billing row ---- */
+  .spotlight { display: grid; grid-template-columns: 1fr 0.8fr; gap: clamp(28px, 5vw, 60px); align-items: center;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 28px; padding: clamp(26px, 4vw, 48px); overflow: hidden; }
+  @media (max-width: 800px) { .spotlight { grid-template-columns: 1fr; text-align: center; } }
+  .spotlight h2 { font-size: clamp(26px, 4vw, 40px); }
+  .spotlight p { color: var(--muted); margin-top: 14px; }
+  .spot-list { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 12px; }
+  @media (max-width: 800px) { .spot-list { max-width: 34ch; margin-inline: auto; } }
+  .spot-list li { display: flex; gap: 11px; align-items: flex-start; font-size: 15.5px; }
+  .spot-list li svg { width: 20px; height: 20px; color: var(--accent); flex: none; margin-top: 2px; }
+  .spot-visual { display: flex; justify-content: center; }
+  .spot-visual .device { width: min(260px, 66vw); }
+
+  /* ---- Bento icon grid ---- */
   .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  @media (max-width: 880px) { .features { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 560px) { .features { grid-template-columns: 1fr; } }
-  .card {
-    background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px;
-    min-width: 0;
-  }
-  .card .ic { width: 42px; height: 42px; border-radius: 12px; background: var(--accent-soft); color: var(--accent-deep); display: grid; place-items: center; margin-bottom: 16px; }
-  :root[data-theme="dark"] .card .ic, :root:not([data-theme="light"]) .card .ic { color: var(--accent); }
-  .card .ic svg { width: 22px; height: 22px; }
+  @media (max-width: 860px) { .features { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .features { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px; min-width: 0;
+    transition: transform .16s ease, border-color .16s ease; }
+  .card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  .card .ic { width: 44px; height: 44px; border-radius: 12px; background: var(--accent-soft); color: var(--accent-deep); display: grid; place-items: center; margin-bottom: 16px; }
+  :root[data-theme="dark"] .card .ic, :root:not([data-theme="light"]) .card .ic { color: var(--accent-2); }
+  .card .ic svg { width: 23px; height: 23px; }
   .card h3 { font-size: 18px; }
+  .card h3 em { font-style: normal; color: var(--muted); font-weight: 600; font-size: 14px; }
   .card p { color: var(--muted); font-size: 15px; margin: 8px 0 0; }
 
-  /* Showcase rail */
-  .rail { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x mandatory; margin-inline: -20px; padding-inline: 20px; }
-  .rail::-webkit-scrollbar { height: 8px; }
-  .rail::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
-  .shot { flex: none; width: 240px; scroll-snap-align: start; }
-  .shot img { border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--surface); }
-  .shot span { display: block; margin-top: 12px; font-size: 14px; color: var(--muted); font-weight: 500; }
+  /* ---- Screens trio ---- */
+  .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(18px, 3vw, 34px); align-items: end; }
+  @media (max-width: 760px) { .trio { grid-template-columns: 1fr; max-width: 320px; margin-inline: auto; gap: 34px; } }
+  .trio .item { text-align: center; }
+  .trio .item.mid { transform: translateY(-16px); }
+  @media (max-width: 760px) { .trio .item.mid { transform: none; } }
+  .trio .item .device { margin-bottom: 16px; }
+  .trio .item span { font-size: 14.5px; color: var(--muted); font-weight: 500; }
 
-  /* Pricing */
+  /* ---- Pricing ---- */
   .prices { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
-  @media (max-width: 620px) { .prices { grid-template-columns: 1fr; } }
-  .price { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 30px; display: flex; flex-direction: column; }
-  .price.hot { border-color: var(--accent); box-shadow: var(--shadow); }
-  .price .tag { font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
-  .price .amt { font-family: var(--display); font-size: 46px; font-weight: 800; margin: 12px 0 2px; letter-spacing: -0.03em; }
-  .price .amt small { font-size: 17px; color: var(--muted); font-weight: 500; font-family: var(--body); }
-  .price ul { list-style: none; padding: 0; margin: 20px 0 26px; display: grid; gap: 11px; }
-  .price li { display: flex; gap: 10px; font-size: 15px; color: var(--fg); }
+  @media (max-width: 640px) { .prices { grid-template-columns: 1fr; } }
+  .price { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 32px; display: flex; flex-direction: column; }
+  .price.hot { border-color: var(--accent); box-shadow: var(--shadow-lg); }
+  .price.hot::after { content: "Popular"; position: absolute; top: 20px; right: 20px; font-size: 12px; font-weight: 700;
+    color: var(--accent-fg); background: var(--accent); padding: 5px 11px; border-radius: 999px; }
+  .price .tag { font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .price .amt { font-family: var(--display); font-size: 50px; font-weight: 800; margin: 14px 0 2px; letter-spacing: -0.04em; }
+  .price .amt small { font-size: 17px; color: var(--muted); font-weight: 500; font-family: var(--body); letter-spacing: 0; }
+  .price ul { list-style: none; padding: 0; margin: 22px 0 28px; display: grid; gap: 12px; }
+  .price li { display: flex; gap: 11px; font-size: 15px; align-items: flex-start; }
   .price li svg { width: 19px; height: 19px; color: var(--accent); flex: none; margin-top: 2px; }
   .price .btn { margin-top: auto; width: 100%; }
 
-  /* Open source strip */
-  .os { background: var(--accent-soft); border: 1px solid var(--line); border-radius: 24px; padding: clamp(28px, 5vw, 48px); text-align: center; }
-  :root[data-theme="dark"] .os, :root:not([data-theme="light"]) .os { background: var(--surface); }
-  .os h2 { font-size: clamp(26px, 4vw, 38px); max-width: 20ch; margin-inline: auto; }
-  .os p { color: var(--muted); max-width: 52ch; margin: 14px auto 26px; }
-  .stack { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 26px; }
-  .chip { font-size: 13px; font-weight: 500; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 6px 13px; }
+  /* ---- Open source ---- */
+  .os { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 28px;
+    padding: clamp(34px, 6vw, 64px); text-align: center; background: var(--surface); }
+  .os::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% -20%, var(--glow), transparent 60%); pointer-events: none; }
+  .os > * { position: relative; }
+  .os h2 { font-size: clamp(27px, 4.2vw, 42px); max-width: 22ch; margin-inline: auto; }
+  .os p { color: var(--muted); max-width: 54ch; margin: 15px auto 28px; }
+  .stack { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; margin-top: 28px; }
+  .chip { font-size: 13px; font-weight: 500; color: var(--muted); background: var(--bg-2); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; }
 
-  footer { border-top: 1px solid var(--line); padding-block: 34px; margin-top: 20px; }
-  .foot-in { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; color: var(--muted); font-size: 14px; }
-  .foot-in a { color: var(--muted); text-decoration: none; }
-  .foot-in a:hover { color: var(--accent); }
+  footer { border-top: 1px solid var(--line); padding-block: 36px; margin-top: 24px; }
+  .foot-in { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; justify-content: space-between; color: var(--muted); font-size: 14px; }
+  .foot-in a:hover { color: var(--accent-deep); }
+  :root[data-theme="dark"] .foot-in a:hover, :root:not([data-theme="light"]) .foot-in a:hover { color: var(--accent-2); }
 
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
 
+<script>
+  addEventListener("scroll", () => {
+    var n = document.querySelector(".nav");
+    if (n) n.classList.toggle("scrolled", scrollY > 8);
+  }, { passive: true });
+</script>
+
 <!-- NAV -->
 <nav class="nav">
   <div class="wrap nav-in">
-    <span class="brand">
-      <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9.5 12 4l8 5.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5Z" fill="currentColor"/><rect x="8.5" y="13" width="7" height="8" rx="1" fill="var(--accent)"/></svg></span>
+    <a class="brand" href="#top">
+      <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9.5 12 4l8 5.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5Z" fill="currentColor"/><rect x="8.5" y="13" width="7" height="8" rx="1.2" fill="#0a7a58"/></svg></span>
       OpenPocket
-    </span>
+    </a>
     <span class="nav-links">
       <a class="lnk" href="#features">Features</a>
       <a class="lnk" href="#screens">Screens</a>
       <a class="lnk" href="#pricing">Pricing</a>
-      <a class="btn" href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">View on GitHub</a>
+      <a class="btn" href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 8.8 21.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.8-2.4 4.6-4.6 4.9.3.3.6.9.6 1.8v2.7c0 .3.2.6.7.5A10 10 0 0 0 12 2Z"/></svg>
+        GitHub
+      </a>
     </span>
   </div>
 </nav>
 
 <!-- HERO -->
-<header class="hero">
-  <div class="wrap">
-    <span class="eyebrow">Offline-first point of sale</span>
-    <h1>Run your shop from your pocket.</h1>
-    <p class="lead">Sell, print receipts, track stock and see your profit — from an Android or iOS phone. No account, no internet required.</p>
-    <div class="hero-cta">
-      <a class="btn" href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 8.8 21.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.300005-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.8-2.4 4.6-4.6 4.9.3.3.6.9.6 1.8v2.7c0 .3.2.6.7.5A10 10 0 0 0 12 2Z"/></svg>
-        Get the code
-      </a>
-      <a class="btn ghost" href="#pricing">See pricing</a>
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow"><span class="dot"></span> Offline-first point of sale</span>
+      <h1>Run your shop from <em>your pocket.</em></h1>
+      <p class="lead">Sell, print receipts, track stock and see your profit — from an Android or iOS phone. No account, no internet required.</p>
+      <div class="hero-cta">
+        <a class="btn" href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 8.8 21.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.8-2.4 4.6-4.6 4.9.3.3.6.9.6 1.8v2.7c0 .3.2.6.7.5A10 10 0 0 0 12 2Z"/></svg>
+          Get the code
+        </a>
+        <a class="btn ghost" href="#pricing">See pricing</a>
+      </div>
+      <p class="hero-note"><b>Free forever</b> for offline selling · cloud sync just $2/month</p>
     </div>
-    <p class="hero-note"><strong>Free forever</strong> for offline selling · optional cloud sync $2/month</p>
 
-    <div class="fan">
-      <div class="phone a"><img src="screenshots/02-products.png" alt="Product catalog with photos" loading="lazy"></div>
-      <div class="phone b"><img src="screenshots/01-home.png" alt="Home dashboard showing today's sales" loading="lazy"></div>
-      <div class="phone c"><img src="screenshots/05-reports.png" alt="Sales reports and profit" loading="lazy"></div>
+    <div class="hero-visual">
+      <div class="price-chip">
+        <span class="pc-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 16a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.4A4.5 4.5 0 0 1 18 16Z"/></svg></span>
+        <span><b>$2<small style="font-size:11px;color:var(--muted);font-weight:500">/mo</small></b><span>cloud sync</span></span>
+      </div>
+      <div class="device main"><div class="screen"><img src="screenshots/01-home.png" alt="OpenPocket home dashboard showing today's sales" loading="eager"></div></div>
+      <div class="device peek"><div class="screen"><img src="screenshots/03-checkout.png" alt="Checkout screen" loading="lazy"></div></div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="facts">
+      <div class="fact"><b>$0</b><span>to sell, forever</span></div>
+      <div class="fact"><b>Zero</b><span>internet required</span></div>
+      <div class="fact"><b>&lt;1s</b><span>to ring up a sale</span></div>
+      <div class="fact"><b>MIT</b><span>open source</span></div>
     </div>
   </div>
 </header>
 
-<div class="wrap">
-  <div class="facts">
-    <div class="fact"><b>$0</b><span>to sell, forever</span></div>
-    <div class="fact"><b>0</b><span>internet required</span></div>
-    <div class="fact"><b>&lt;1s</b><span>to ring up a sale</span></div>
-    <div class="fact"><b>MIT</b><span>open source</span></div>
+<!-- SPOTLIGHT -->
+<section class="block" style="padding-bottom:0">
+  <div class="wrap">
+    <div class="spotlight">
+      <div>
+        <span class="kicker">Fast billing</span>
+        <h2>Ring up a sale in seconds.</h2>
+        <p>Tap products or scan a barcode into the cart, take cash, card, transfer or store credit, and hand over a receipt. The counter stays quick even when the Wi-Fi doesn't.</p>
+        <ul class="spot-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Change and quick-cash suggestions built in</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Line and bill discounts, per-item tax</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Exact money math — never floating point</li>
+        </ul>
+      </div>
+      <div class="spot-visual">
+        <div class="device"><div class="screen"><img src="screenshots/03-checkout.png" alt="Checkout with line items and payment methods" loading="lazy"></div></div>
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
 <!-- FEATURES -->
 <section class="block" id="features">
   <div class="wrap">
     <div class="section-head">
-      <h2>Everything a counter needs. Nothing it doesn't.</h2>
+      <span class="kicker">Everything the counter needs</span>
+      <h2>One app, from the first sale to the month-end.</h2>
       <p>Built for mini marts, grocers, cafés, kiosks and home businesses — the shops that can't wait for a connection.</p>
     </div>
     <div class="features">
-      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 4 6v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V6l-2-4Z"/><path d="M4 6h16M9 10a3 3 0 0 0 6 0"/></svg></div><h3>Fast billing</h3><p>Tap or scan items into a cart. Cash, card, transfer or store credit, with change and quick-cash suggestions.</p></div>
       <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3.3 7 8.7 5 8.7-5M12 12v10"/><path d="M3.3 7 12 2l8.7 5v10L12 22l-8.7-5Z"/></svg></div><h3>Real inventory</h3><p>Photos, categories, SKUs, barcodes and per-product low-stock and out-of-stock alerts.</p></div>
-      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M11 5v14M15 9v6M18 9v6"/></svg></div><h3>Barcode scanning</h3><p>Scan to sell or to add a product. A built-in lookup fills the name and image, saved for offline use.</p></div>
-      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M15 8a3 3 0 1 0 0-.01M2 21a7 7 0 0 1 14 0M15 14a7 7 0 0 1 7 7"/></svg></div><h3>Staff &amp; roles</h3><p>Owner, manager and cashier PINs. Every sale is attributed to the cashier — on screen and on the receipt.</p></div>
-      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V4h12v5M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg></div><h3>Receipts &amp; invoices</h3><p>Thermal 58/80mm or A4, themed to your shop. Print over Bluetooth, Wi-Fi or USB, or share a PDF invoice.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M11 5v14M15 9v6M18 9v6"/></svg></div><h3>Barcode scanning</h3><p>Scan to sell or add a product. A built-in lookup fills the name and image, saved for offline use.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M15 8a3 3 0 1 0 0-.01M2 21a7 7 0 0 1 14 0M15 14a7 7 0 0 1 7 7"/></svg></div><h3>Staff &amp; roles</h3><p>Owner, manager and cashier PINs. Every sale is attributed to the cashier who made it.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V4h12v5M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg></div><h3>Receipts &amp; invoices</h3><p>Thermal 58/80mm or A4, themed to your shop. Print over Bluetooth, Wi-Fi or USB, or share a PDF.</p></div>
       <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M7 15l4-5 3 3 5-7"/></svg></div><h3>Reports &amp; profit</h3><p>Daily, weekly and monthly sales, gross profit, refunds, discounts, payment mix and best sellers.</p></div>
-      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9 12 3l9 6v10a1 1 0 0 1-1 1h-4v-7H8v7H4a1 1 0 0 1-1-1Z"/></svg></div><h3>Multiple shops</h3><p>Run several separate shops on one device — each with its own products, staff, receipts and books.</p></div>
-      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 16a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.4A4.5 4.5 0 0 1 18 16Z"/><path d="M12 12v6m-2.5-2.5L12 18l2.5-2.5"/></svg></div><h3>Cloud sync <em>(optional)</em></h3><p>Back up your shop and sync across devices for $2/month. Offline selling stays free.</p></div>
-      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9c0-.5 0-1-.1-1.5A6 6 0 0 1 12 3Z"/></svg></div><h3>Dark mode</h3><p>Full light and dark theming across every screen, so the counter is easy on the eyes at any hour.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9 12 3l9 6v10a1 1 0 0 1-1 1h-4v-7H8v7H4a1 1 0 0 1-1-1Z"/></svg></div><h3>Multiple shops <em>· one device</em></h3><p>Run several separate shops on one phone — each with its own products, staff, receipts and books.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 16a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.4A4.5 4.5 0 0 1 18 16Z"/><path d="M12 12v6m-2.5-2.5L12 18l2.5-2.5"/></svg></div><h3>Cloud sync <em>· optional</em></h3><p>Back up your shop and sync across devices for $2/month. Offline selling stays free.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9c0-.5 0-1-.1-1.5A6 6 0 0 1 12 3Z"/></svg></div><h3>Dark mode</h3><p>Full light and dark theming across every screen, easy on the eyes at any hour.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></div><h3>Yours to keep</h3><p>Open source under MIT. Your data stays on your device unless you choose to back it up.</p></div>
     </div>
   </div>
 </section>
@@ -266,19 +348,14 @@
 <section class="block" id="screens" style="padding-top:0">
   <div class="wrap">
     <div class="section-head">
-      <h2>See it in action</h2>
-      <p>The real app running a demo grocery — 24 products, staff and a day of sales.</p>
+      <span class="kicker">See it in action</span>
+      <h2>The real app, running a real shop.</h2>
+      <p>A demo grocery with 24 products, staff and a day of sales — exactly what you'd see on the counter.</p>
     </div>
-  </div>
-  <div class="wrap">
-    <div class="rail">
-      <div class="shot"><img src="screenshots/03-checkout.png" alt="Checkout screen"><span>Checkout &amp; payment</span></div>
-      <div class="shot"><img src="screenshots/02-products.png" alt="Products"><span>Product catalog</span></div>
-      <div class="shot"><img src="screenshots/05-reports.png" alt="Reports"><span>Reports &amp; profit</span></div>
-      <div class="shot"><img src="screenshots/04-sale-detail.png" alt="Sale detail"><span>Sale detail &amp; refunds</span></div>
-      <div class="shot"><img src="screenshots/06-sales.png" alt="Sales history"><span>Sales history</span></div>
-      <div class="shot"><img src="screenshots/07-staff-lock.png" alt="Staff sign-in"><span>Staff sign-in</span></div>
-      <div class="shot"><img src="screenshots/08-cart-products.png" alt="Building a cart"><span>Building a cart</span></div>
+    <div class="trio">
+      <div class="item"><div class="device"><div class="screen"><img src="screenshots/02-products.png" alt="Product catalog" loading="lazy"></div></div><span>Product catalog</span></div>
+      <div class="item mid"><div class="device"><div class="screen"><img src="screenshots/05-reports.png" alt="Reports and profit" loading="lazy"></div></div><span>Reports &amp; profit</span></div>
+      <div class="item"><div class="device"><div class="screen"><img src="screenshots/04-sale-detail.png" alt="Sale detail and refunds" loading="lazy"></div></div><span>Sale detail &amp; refunds</span></div>
     </div>
   </div>
 </section>
@@ -287,8 +364,9 @@
 <section class="block" id="pricing" style="padding-top:0">
   <div class="wrap">
     <div class="section-head">
-      <h2>Honest pricing</h2>
-      <p>The whole point-of-sale is free. You only pay if you want your shop backed up online.</p>
+      <span class="kicker">Honest pricing</span>
+      <h2>The whole POS is free. Pay only to go online.</h2>
+      <p>Selling, inventory, staff, receipts and reports never cost anything and never need a connection.</p>
     </div>
     <div class="prices">
       <div class="price">
@@ -304,7 +382,7 @@
         <a class="btn ghost" href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">Start free</a>
       </div>
       <div class="price hot">
-        <span class="tag" style="color:var(--accent-deep)">Cloud sync · popular</span>
+        <span class="tag">Cloud sync</span>
         <div class="amt">$2<small> / month</small></div>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Everything in the free plan</li>
@@ -323,7 +401,8 @@
 <section class="block" style="padding-top:0">
   <div class="wrap">
     <div class="os">
-      <h2>Open source, and correct where it counts.</h2>
+      <span class="kicker">Open source</span>
+      <h2>Correct where it counts, open all the way down.</h2>
       <p>Money is always integer minor units, never floating point — so tax, discounts and change are exact. Read every line, run it yourself, or build on it.</p>
       <a class="btn" href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">Explore the repository</a>
       <div class="stack">
@@ -340,7 +419,7 @@
 
 <footer>
   <div class="wrap foot-in">
-    <span class="brand" style="font-size:16px"><span class="logo" style="width:24px;height:24px" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9.5 12 4l8 5.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5Z" fill="currentColor"/></svg></span> OpenPocket POS</span>
+    <span class="brand" style="font-size:16px"><span class="logo" style="width:26px;height:26px" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9.5 12 4l8 5.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5Z" fill="currentColor"/></svg></span> OpenPocket POS</span>
     <span>Free &amp; offline-first · MIT licensed</span>
     <a href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">github.com/wraplet-app/openpocket-pos</a>
   </div>
