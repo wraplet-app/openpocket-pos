@@ -19,7 +19,14 @@ import { useCallback, useEffect, useState } from 'react';
  * For production, add a Google Play app in RevenueCat and swap in its `goog_…`
  * key. Empty = billing not configured.
  */
-export const REVENUECAT_ANDROID_KEY = 'test_hZCCFmXpUXkxAFUBYkPwtivzYtF';
+// Production key (goog_…) — paste it here once Google Play billing + the $2/mo
+// product are live in RevenueCat. Empty until then.
+const REVENUECAT_PROD_KEY = '';
+// The RevenueCat SDK *force-closes* a release build that configures with a Test
+// Store key, so the test key is used only in development. Release builds use the
+// production key (empty until Play billing is set up) → billing is simply
+// "not configured", and the app degrades gracefully instead of crashing.
+export const REVENUECAT_ANDROID_KEY = __DEV__ ? 'test_hZCCFmXpUXkxAFUBYkPwtivzYtF' : REVENUECAT_PROD_KEY;
 /** The RevenueCat entitlement (identifier) that unlocks cloud sync. */
 export const CLOUD_ENTITLEMENT = 'cloud';
 
@@ -53,7 +60,10 @@ async function configure(): Promise<void> {
 /** True if the current user may use cloud sync (active subscription or dev unlock). */
 export async function hasCloudSync(): Promise<boolean> {
   if (devUnlocked) return true;
-  if (!billingAvailable()) return false;
+  // Billing not configured (e.g. a release build before Google Play billing is
+  // live): cloud backup is open to everyone rather than paywalled. Once a real
+  // key is set, the entitlement below is enforced.
+  if (!billingAvailable()) return true;
   await configure();
   try {
     const info = await rc().getCustomerInfo();

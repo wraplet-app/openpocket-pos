@@ -79,7 +79,7 @@ export default function Paywall() {
         <View style={[s.note, { backgroundColor: t.accentSoft, marginTop: space.xxl }]}>
           <Ionicons name="construct-outline" size={18} color={t.accent} />
           <Text style={{ color: t.fg, marginLeft: 8, flex: 1, fontSize: 13 }}>
-            Billing isn't set up on this build yet. Install RevenueCat, add your API key, and configure the $2/mo product to sell subscriptions. See HANDOFF.md.
+            Cloud backup is free to use right now — paid plans are coming soon. Offline selling always stays free.
           </Text>
         </View>
       )}
