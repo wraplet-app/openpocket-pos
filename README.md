@@ -1,76 +1,112 @@
+<div align="center">
+
 # OpenPocket POS
 
-A free, open-source, **offline-first** point-of-sale for small merchants —
-mini marts, grocers, cafés, bakeries, clothing shops, kiosks and home
-businesses. Bill from an Android or iOS phone or tablet, no account and no
-internet required.
+**A free, offline-first point-of-sale that lives in your pocket.**
 
-> First-run experience: **Install → Create Store → Add Product → New Sale →
-> Receive Payment → Receipt.** No login, no cloud, works on a plane.
+Run a real shop from an Android or iOS phone — sell, print receipts, track
+stock and see your profit, with no account and no internet required. Optional
+cloud backup and multi-device sync for **$2/month**.
 
-## Principles
+[![License: MIT](https://img.shields.io/badge/License-MIT-0fa678.svg)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-0fa678)
+![Offline-first](https://img.shields.io/badge/offline--first-yes-0fa678)
+![Expo](https://img.shields.io/badge/Expo-57-000)
 
-Offline operation · fast billing · simple UX · **correct money math** ·
-auditable inventory · privacy · no mandatory account · no mandatory cloud ·
-open-source extensibility · phone + tablet.
+</div>
 
-Correctness of sales, payments, stock and financial calculations matters more
-than visual polish. Money is never a floating-point number.
+---
 
-## Monorepo layout
+<div align="center">
+  <img src="docs/screenshots/01-home.png" width="24%" alt="Home dashboard" />
+  <img src="docs/screenshots/02-products.png" width="24%" alt="Product catalog" />
+  <img src="docs/screenshots/03-checkout.png" width="24%" alt="Checkout" />
+  <img src="docs/screenshots/05-reports.png" width="24%" alt="Reports" />
+</div>
+
+<div align="center">
+  <img src="docs/screenshots/04-sale-detail.png" width="24%" alt="Sale detail & refunds" />
+  <img src="docs/screenshots/06-sales.png" width="24%" alt="Sales history" />
+  <img src="docs/screenshots/07-staff-lock.png" width="24%" alt="Staff sign-in" />
+  <img src="docs/screenshots/08-cart-products.png" width="24%" alt="Building a cart" />
+</div>
+
+---
+
+## Why OpenPocket
+
+Most POS apps assume a reliable connection, a monthly subscription and a
+merchant account before you can ring up a single sale. OpenPocket assumes the
+opposite: a phone, a shopkeeper, and a queue of customers.
+
+- **Works on a plane.** Every sale, product and report is stored on the device
+  in SQLite. No network is ever required to sell.
+- **No account to start.** Install, name your shop, and sell. Sign-up is not a
+  wall in front of the product.
+- **Money is correct.** All amounts are integer minor units (cents/paisa),
+  never floating point. Tax, discounts and change are exact.
+- **Yours to keep.** Open-source (MIT), your data stays on your device unless
+  you choose to back it up.
+
+## Features
+
+| | |
+|---|---|
+| 🧾 **Fast billing** | Tap products or scan barcodes into a cart; cash, card, transfer or store credit; change and quick-cash suggestions. |
+| 📦 **Inventory** | Real product photos, categories, SKUs, barcodes, per-product low-stock alerts, out-of-stock flags. |
+| 📷 **Barcode scan** | Scan to sell or to add a product — with an Open Food Facts lookup that fills in name and image, saved locally for offline use. |
+| 👥 **Staff & roles** | Owner / manager / cashier PINs; every sale is attributed to the cashier who made it, on screen and on the receipt. |
+| 🖨️ **Receipts & invoices** | Themeable receipts (58/80mm thermal or A4), print over Bluetooth/Wi-Fi/USB, or share a proper PDF invoice. |
+| 📊 **Reports** | Daily/weekly/monthly sales, gross profit, refunds, discounts, payment-method mix and best sellers. |
+| 🏪 **Multi-shop** | Run several separate shops on one device, each with its own products, staff, receipts and books. |
+| ☁️ **Cloud sync** *(optional, $2/mo)* | Back up your shop and sync across devices. Offline selling stays free forever. |
+| 🌙 **Dark mode** | Full light/dark theming throughout. |
+
+## Pricing
+
+- **Offline POS — free, forever.** Selling, inventory, staff, receipts and
+  reports never cost anything and never need a connection.
+- **Cloud sync — $2/month.** Automatic backup and multi-device sync, billed
+  through the app store (RevenueCat). Cancel anytime.
+
+## Tech
+
+React Native (Expo + Expo Router) · TypeScript · SQLite · Zustand ·
+pnpm + Turborepo monorepo · Cloudflare Worker + D1 for optional sync ·
+RevenueCat for subscriptions.
 
 ```
 openpocket-pos/
   apps/
-    mobile/       # Expo + Expo Router app            (next slice)
-    api/          # optional cloud backend            (deferred, V0.5)
-    web-admin/    # optional web dashboard            (deferred)
+    mobile/        # the Expo app (screens, repos, stores)
+    sync-worker/   # optional Cloudflare Worker + D1 cloud-sync backend
   packages/
-    types/        # shared domain primitives          ✅ built
-    pos-core/     # money + pricing + profit engine    ✅ built, tested
-    database/     # SQLite schema + migration runner   ✅ built, tested
-    inventory/    # stock-movement helpers            (next slice)
-    validation/   # Zod schemas                        (next slice)
-    localization/ # i18next resources                 (next slice)
-    ui/           # shared RN components              (next slice)
-    sync/         # optional outbox-based sync        (deferred, V0.5)
-    config/       # shared eslint/tsconfig            (folded into root for now)
-  docs/
+    pos-core/      # money + pricing + profit engine (integer minor units, tested)
+    database/      # SQLite schema, forward-only migrations, sync metadata
+    types/         # shared domain + sync types
+  docs/            # architecture, database, roadmap, screenshots
 ```
 
-See [docs/roadmap.md](docs/roadmap.md) for the full slice-by-slice plan and
-[docs/architecture.md](docs/architecture.md) for the layering rules.
+## Run it locally
 
-## What works today (V0.1 foundation)
-
-- **`@openpocket/pos-core`** — deterministic integer-minor-unit money math,
-  the cart pricing engine (line + bill discounts, per-line tax, split/cash
-  payment settlement, suggested cash amounts) and snapshot-based profit.
-  Fully unit-tested (20 tests).
-- **`@openpocket/database`** — the V0.1 SQLite schema (stores, categories,
-  products, sales, sale_items, payments, stock_movements) as a versioned
-  migration, plus a portable, idempotent migration runner. Tested against a
-  real SQLite engine (3 tests).
-- **`@openpocket/types`** — shared money/id/enum types and the `SyncFields`
-  every entity carries so cloud sync can be added later without restructuring.
-
-The UI, repositories, hooks and screens are the next vertical slice — they are
-intentionally **not** stubbed with fake data. Nothing here pretends to work
-before its persistence layer exists.
-
-## Develop
-
-Requires Node ≥ 22 (built with Node 26) and pnpm 10.
+Requires Node ≥ 22 and pnpm 10.
 
 ```bash
 pnpm install
-pnpm test          # runs every package's tests
+pnpm test                     # run the pos-core + database test suites
+
+cd apps/mobile
+npx expo run:android          # or: npx expo run:ios  (dev build; barcode + camera need native)
 ```
 
-The core packages run with **zero build step** — Node's native TypeScript
-type-stripping executes the `.ts` sources directly. See
-[docs/development.md](docs/development.md).
+On first launch, tap **Load demo shop** (dev builds) to populate a store with
+24 real products, staff and sample sales — the state shown in the screenshots
+above.
+
+See [docs/development.md](docs/development.md) for the full setup, and
+[docs/architecture.md](docs/architecture.md) for the layering rules.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Contributions welcome; see
+[CONTRIBUTING.md](CONTRIBUTING.md).
