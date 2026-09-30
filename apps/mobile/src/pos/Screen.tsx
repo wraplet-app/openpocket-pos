@@ -77,7 +77,10 @@ export function Screen({ title, subtitle, back = true, right, children, scroll =
   return (
     <View style={[s.root, { backgroundColor: t.bg }]}>
       <Header title={title} subtitle={subtitle} back={back} right={right} />
-      <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {/* Android runs edge-to-edge, where the OS no longer resizes for the keyboard,
+          so KAV must handle it on both platforms. The offset is the fixed header
+          above this view, otherwise padding is over-applied and leaves a gap. */}
+      <KeyboardAvoidingView style={s.flex} behavior="padding" keyboardVerticalOffset={insets.top + HEADER_HEIGHT}>
         {scroll ? (
           <ScrollView
             {...scrollProps}

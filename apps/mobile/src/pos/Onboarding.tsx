@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, Pressable, Animated, useWindowDimensions,
-  useColorScheme, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert,
+  useColorScheme, StyleSheet, KeyboardAvoidingView, ScrollView, Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -142,7 +142,7 @@ function SetupForm({ t, insets, onCreated }: { t: Theme; insets: { top: number; 
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + 24, paddingHorizontal: 24, paddingBottom: insets.bottom + 40, flexGrow: 1 }}>
         <View style={o.stepRow}>
           {[0, 1].map((i) => (
