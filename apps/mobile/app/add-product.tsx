@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, Pressable, Image, ActivityIndicator, Modal, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, Image, ActivityIndicator, Modal, Keyboard, StyleSheet } from 'react-native';
 import { showAlert } from '../src/pos/alert';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -41,7 +41,6 @@ export default function AddProduct() {
   const [viewing, setViewing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [looking, setLooking] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     getStore().then((s) => {
@@ -105,7 +104,6 @@ export default function AddProduct() {
 
   const save = async () => {
     if (!store || busy) return;
-    setErr(null);
     const decimals = store.currency_decimals;
     try {
       if (!name.trim()) throw new Error('Name is required');
@@ -124,14 +122,17 @@ export default function AddProduct() {
       else await createProduct({ storeId: store.id, ...common, openingStock });
       router.back();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : String(e));
+      // Surface the reason clearly — the old inline note sat below the fold,
+      // hidden by the keyboard, so a failed save looked like nothing happened.
+      Keyboard.dismiss();
+      showAlert('Cannot save product', e instanceof Error ? e.message : String(e));
       setBusy(false);
     }
   };
 
-  const field = (label: string, value: string, set: (v: string) => void, opts?: { kb?: 'decimal-pad' | 'number-pad'; ph?: string; caps?: 'none' | 'sentences' | 'words' }) => (
+  const field = (label: string, value: string, set: (v: string) => void, opts?: { kb?: 'decimal-pad' | 'number-pad'; ph?: string; caps?: 'none' | 'sentences' | 'words'; req?: boolean }) => (
     <>
-      <Text style={[st.label, { color: t.muted }]}>{label}</Text>
+      <Text style={[st.label, { color: t.muted }]}>{label}{opts?.req ? <Text style={{ color: t.danger }}> *</Text> : null}</Text>
       <TextInput value={value} onChangeText={set} placeholder={opts?.ph} placeholderTextColor={t.muted}
         keyboardType={opts?.kb} autoCapitalize={opts?.caps} style={[st.input, { color: t.fg, borderColor: t.line, backgroundColor: t.panel }]} />
     </>
@@ -173,7 +174,7 @@ export default function AddProduct() {
         )}
       </View>
 
-      {field('Name', name, setName, { ph: 'e.g. Cola 500ml', caps: 'words' })}
+      {field('Name', name, setName, { ph: 'e.g. Cola 500ml', caps: 'words', req: true })}
 
       <Text style={[st.label, { color: t.muted }]}>Category</Text>
       <View style={st.wrap}>
@@ -198,7 +199,7 @@ export default function AddProduct() {
       </View>
       <Text style={{ color: t.faint, fontSize: 11, marginTop: 6 }}>Auto-fills name and photo from the Open Food Facts database.</Text>
 
-      {field(`Selling price (${store?.currency_code ?? ''})`, price, setPrice, { kb: 'decimal-pad', ph: '0.00' })}
+      {field(`Selling price (${store?.currency_code ?? ''})`, price, setPrice, { kb: 'decimal-pad', ph: '0.00', req: true })}
       {field(`Cost price (${store?.currency_code ?? ''})`, cost, setCost, { kb: 'decimal-pad', ph: '0.00 (optional)' })}
       {margin !== null && (
         <Text style={{ color: margin >= 0 ? t.ok : t.danger, fontSize: 12, marginTop: 6, fontWeight: '600' }}>
@@ -223,8 +224,6 @@ export default function AddProduct() {
         field('Opening stock', stock, setStock, { kb: 'number-pad', ph: '0' })
       )}
       {field('Low-stock alert at', lowStock, setLowStock, { kb: 'number-pad', ph: `${DEFAULT_LOW_STOCK} (default)` })}
-
-      {err && <Text style={{ color: t.danger, marginTop: space.lg }}>{err}</Text>}
 
       {/* Full-screen photo viewer */}
       <Modal visible={viewing && !!imageUri} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setViewing(false)}>
