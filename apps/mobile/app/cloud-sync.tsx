@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, Alert, ActivityIndicator, StyleSheet 
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getSyncState, saveSyncConfig, disconnectSync, syncNow, restoreFromCloud, isConfigured, type SyncState } from '../src/sync';
+import { hasCloudSync } from '../src/subscription';
 import { newId } from '../src/id';
 import { useSession } from '../src/session';
 import { useTheme, space, radius } from '../src/theme';
@@ -18,6 +19,8 @@ export default function CloudSync() {
   const [busy, setBusy] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
+    // Cloud sync is a paid feature — no subscription → paywall.
+    hasCloudSync().then((ok) => { if (!ok) router.replace('/paywall'); });
     getSyncState().then((s) => {
       setState(s);
       setUrl(s.server_url ?? '');

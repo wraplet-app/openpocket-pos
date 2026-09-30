@@ -273,6 +273,47 @@ screen, search/filters. Cloud sync engine passes an end-to-end test suite.
   `apps/mobile/assets/demo/ATTRIBUTION.md` with them if you redistribute.
 - The sync worker's `schema.sql` includes the new `stores` columns but is still not deployed.
 
-**How to continue:** `pnpm install`, `pnpm test`, run the app (§1). Pick the next
-item, add a migration if the schema changes, keep SQL in `repos.ts` and money in
-`pos-core`, and add a test alongside any non-trivial logic.
+## Subscription (RevenueCat) — $2/mo cloud sync
+
+Offline selling is free forever; the **online** feature (cloud backup + sync) is
+gated behind a $2/month subscription via **RevenueCat**.
+
+**Already set up (RevenueCat dashboard):**
+- Project **OpenPocket POS** (`fb0ed29f`), kept separate from Milo.
+- Entitlement identifier **`cloud`** (matches `CLOUD_ENTITLEMENT` in code).
+- A default offering with a monthly package.
+- The **Test Store** public SDK key is wired into `apps/mobile/src/subscription.ts`
+  (`REVENUECAT_ANDROID_KEY`). Public SDK keys are safe to ship.
+
+**App side (already built):**
+- `src/subscription.ts` — RevenueCat wrapper (guarded so the app runs even before
+  the SDK is installed): `hasCloudSync()`, `getMonthlyPlan()`, `purchaseMonthly()`,
+  `restorePurchases()`, `useCloudEntitlement()`, plus a `devUnlock()`.
+- `app/paywall.tsx` — the $2/mo paywall (benefits, Subscribe, Restore, and a
+  dev-only "Unlock for testing").
+- `app/cloud-sync.tsx` redirects to `/paywall` unless the `cloud` entitlement is active.
+
+**To activate it (needs a rebuild — react-native-purchases is native):**
+```bash
+cd apps/mobile
+npx expo install react-native-purchases
+npx expo prebuild
+npx expo run:android      # or your build pipeline
+```
+After that the paywall's **Subscribe** runs against the RevenueCat **Test Store**
+(sandbox) — no Google Play needed to test the flow.
+
+**To sell for real (production):**
+1. In RevenueCat → **Apps** → add a **Google Play** app (package `io.openpocket.pos`)
+   and upload a Play service-account credential.
+2. In **Google Play Console**, create a **$2/month subscription** product.
+3. In RevenueCat, import that product, add it to the monthly package, and attach the
+   package's product to the **`cloud`** entitlement.
+4. Swap `REVENUECAT_ANDROID_KEY` in `subscription.ts` from the `test_…` key to the
+   app's **`goog_…`** public key, and ship a Play build.
+
+## How to continue
+
+`pnpm install`, `pnpm test`, run the app (§1). Pick the next item, add a migration
+if the schema changes, keep SQL in `repos.ts` and money in `pos-core`, and add a
+test alongside any non-trivial logic.
