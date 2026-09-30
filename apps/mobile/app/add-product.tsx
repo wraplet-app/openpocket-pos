@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, Pressable, Image, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, Image, ActivityIndicator, Modal, StyleSheet } from 'react-native';
 import { showAlert } from '../src/pos/alert';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -38,6 +38,7 @@ export default function AddProduct() {
   const [addingCategory, setAddingCategory] = useState(false);
   const [currentStock, setCurrentStock] = useState<number | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [viewing, setViewing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [looking, setLooking] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -86,12 +87,18 @@ export default function AddProduct() {
     } finally { setLooking(false); }
   };
 
-  // Android's native Alert renders at most 3 buttons, so keep it to
-  // Camera / Gallery / Cancel and expose Remove as an ✕ on the preview.
+  const pick = async (fn: () => Promise<string | null>) => {
+    try { const u = await fn(); if (u) setImageUri(u); }
+    catch (e) { showAlert('Could not add photo', e instanceof Error ? e.message : String(e)); }
+  };
+
+  // Tapping the photo: view it full-screen if one exists, plus take / gallery.
+  // Remove is the ✕ on the preview. The themed alert stacks any number of buttons.
   const chooseImage = () => {
     showAlert('Product photo', undefined, [
-      { text: 'Take photo', onPress: async () => { const u = await takePhoto(); if (u) setImageUri(u); } },
-      { text: 'Choose from gallery', onPress: async () => { const u = await pickFromGallery(); if (u) setImageUri(u); } },
+      ...(imageUri ? [{ text: 'View photo', onPress: () => setViewing(true) }] : []),
+      { text: imageUri ? 'Replace — take photo' : 'Take photo', onPress: () => pick(takePhoto) },
+      { text: imageUri ? 'Replace — from gallery' : 'Choose from gallery', onPress: () => pick(pickFromGallery) },
       { text: 'Cancel', style: 'cancel' as const },
     ]);
   };
@@ -218,6 +225,16 @@ export default function AddProduct() {
       {field('Low-stock alert at', lowStock, setLowStock, { kb: 'number-pad', ph: `${DEFAULT_LOW_STOCK} (default)` })}
 
       {err && <Text style={{ color: t.danger, marginTop: space.lg }}>{err}</Text>}
+
+      {/* Full-screen photo viewer */}
+      <Modal visible={viewing && !!imageUri} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setViewing(false)}>
+        <Pressable style={st.viewer} onPress={() => setViewing(false)}>
+          {imageUri ? <Image source={{ uri: imageUri }} style={st.viewerImg} resizeMode="contain" /> : null}
+          <Pressable onPress={() => setViewing(false)} hitSlop={12} style={st.viewerClose}>
+            <Ionicons name="close" size={26} color="#fff" />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
@@ -231,4 +248,7 @@ const st = StyleSheet.create({
   label: { fontSize: 13, fontWeight: '600', marginTop: space.lg, marginBottom: space.sm },
   input: { borderWidth: 1, borderRadius: radius.md, paddingHorizontal: space.lg, paddingVertical: 13, fontSize: 16 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  viewer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center', padding: space.lg },
+  viewerImg: { width: '100%', height: '100%' },
+  viewerClose: { position: 'absolute', top: space.xxl, right: space.xl, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
 });

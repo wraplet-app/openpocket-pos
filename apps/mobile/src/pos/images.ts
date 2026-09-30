@@ -26,10 +26,12 @@ async function persist(asset: ImagePicker.ImagePickerAsset, dir: string = DIR): 
   return dest;
 }
 
+// Product photos keep the whole image the user picked (no forced square crop) —
+// the UI shows them with resizeMode="contain" so nothing is cut off.
 export async function pickFromGallery(): Promise<string | null> {
   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!perm.granted) return null;
-  const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6, allowsEditing: true, aspect: [1, 1] });
+  const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7 });
   if (res.canceled || !res.assets?.[0]) return null;
   return persist(res.assets[0]);
 }
@@ -37,7 +39,7 @@ export async function pickFromGallery(): Promise<string | null> {
 export async function takePhoto(): Promise<string | null> {
   const perm = await ImagePicker.requestCameraPermissionsAsync();
   if (!perm.granted) return null;
-  const res = await ImagePicker.launchCameraAsync({ quality: 0.6, allowsEditing: true, aspect: [1, 1] });
+  const res = await ImagePicker.launchCameraAsync({ quality: 0.7 });
   if (res.canceled || !res.assets?.[0]) return null;
   return persist(res.assets[0]);
 }
