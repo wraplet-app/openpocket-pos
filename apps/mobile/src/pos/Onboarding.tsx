@@ -7,7 +7,7 @@ import { showAlert } from './alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { createStore, type StoreProfile } from '../repos';
-import { seedDemoData } from '../seed';
+import { loadDemoShop, hasHostedSync } from '../sync';
 import { useTheme, type Theme } from '../theme';
 import { DEFAULT_ACCENT, CURRENCIES, defaultCurrencyFor, localeForCurrency } from '../branding';
 import { ShopDetailsFields, ReceiptFields, ReceiptPreview } from './StoreProfileForm';
@@ -117,6 +117,20 @@ function SetupForm({ t, insets, onCreated }: { t: Theme; insets: { top: number; 
 
   const go = (s: 0 | 1) => { setStep(s); scroll.current?.scrollTo({ y: 0, animated: false }); };
 
+  // Pull the public demo store so anyone can try the app instantly. It comes
+  // down as a local sandbox copy (edits stay on this device).
+  const demo = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await loadDemoShop();
+      onCreated();
+    } catch (e) {
+      showAlert('Could not load the demo', e instanceof Error ? e.message : String(e));
+      setBusy(false);
+    }
+  };
+
   const create = async () => {
     if (!canNext || busy) return;
     setBusy(true);
@@ -129,22 +143,9 @@ function SetupForm({ t, insets, onCreated }: { t: Theme; insets: { top: number; 
     }
   };
 
-  // Dev-only: one-tap demo store (products, staff, customers, sales).
-  const seed = async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await seedDemoData();
-      onCreated();
-    } catch (e) {
-      showAlert('Could not load demo', e instanceof Error ? e.message : String(e));
-      setBusy(false);
-    }
-  };
-
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
-      <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + 24, paddingHorizontal: 24, paddingBottom: insets.bottom + 40, flexGrow: 1 }}>
+      <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + 40, paddingHorizontal: 24, paddingBottom: insets.bottom + 40, flexGrow: 1 }}>
         <View style={o.stepRow}>
           {[0, 1].map((i) => (
             <View key={i} style={[o.stepBar, { backgroundColor: i <= step ? t.accent : t.line }]} />
@@ -173,15 +174,15 @@ function SetupForm({ t, insets, onCreated }: { t: Theme; insets: { top: number; 
               })}
             </View>
 
-            <Pressable onPress={() => go(1)} disabled={!canNext}
-              style={[o.next, { backgroundColor: t.accent, opacity: canNext ? 1 : 0.5, marginTop: 32 }]}>
+            <Pressable onPress={() => go(1)} disabled={!canNext || busy}
+              style={[o.next, { backgroundColor: t.accent, opacity: canNext && !busy ? 1 : 0.5, marginTop: 32 }]}>
               <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 17 }}>Continue</Text>
               <Ionicons name="arrow-forward" size={18} color={t.accentFg} style={{ marginLeft: 8 }} />
             </Pressable>
 
-            {__DEV__ && (
-              <Pressable onPress={seed} disabled={busy} style={{ marginTop: 16, alignSelf: 'center' }} hitSlop={10}>
-                <Text style={{ color: t.muted, fontWeight: '600' }}>Load demo shop (dev)</Text>
+            {hasHostedSync() && (
+              <Pressable onPress={demo} disabled={busy} style={{ marginTop: 18, alignSelf: 'center' }} hitSlop={10}>
+                <Text style={{ color: t.accent, fontWeight: '700' }}>{busy ? 'Loading demo…' : 'Explore a demo store instead'}</Text>
               </Pressable>
             )}
           </>

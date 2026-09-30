@@ -195,6 +195,21 @@ export async function getShopCode(): Promise<string | null> {
   return s.token ? formatCode(s.token) : null;
 }
 
+/** The public "try it" demo store (Maple Street Market) in the hosted backend. */
+export const DEMO_SHOP_CODE = 'XRVK2V3VQP7GFS69';
+
+/**
+ * Pull the public demo store onto this device as a LOCAL sandbox copy, then
+ * disconnect sync so a tester's edits stay local and never touch the shared
+ * demo. Returns the number of records pulled.
+ */
+export async function loadDemoShop(): Promise<number> {
+  if (!hasHostedSync()) throw new Error('The demo store needs a configured backend.');
+  const n = await restoreFromCloud(DEFAULT_SYNC_URL, DEMO_SHOP_CODE);
+  await disconnectSync();
+  return n;
+}
+
 /**
  * Adopt a store from the cloud onto a fresh/second device: wipe local synced
  * data, pull everything for the token's store, and save the config. Destructive
