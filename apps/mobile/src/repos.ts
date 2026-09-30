@@ -15,13 +15,56 @@ import { getDb } from './db';
 import { newId, DEVICE_ID } from './id';
 import { type Role, hashPin, verifyPin, randomSalt } from './roles';
 
+export type ReceiptPaper = 'a4' | 'thermal80' | 'thermal58';
+
 export interface Store {
   id: string;
   name: string;
   currency_code: string;
   currency_locale: string;
   currency_decimals: number;
+  // Shop profile + receipt look. All optional; NULL means "use the default".
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  tax_id?: string | null;
+  tagline?: string | null;
+  logo_uri?: string | null;
+  receipt_footer?: string | null;
+  receipt_terms?: string | null;
+  receipt_accent?: string | null;
+  receipt_paper?: ReceiptPaper | null;
+  receipt_show_logo?: number | null;
+  receipt_show_contact?: number | null;
+  receipt_show_staff?: number | null;
 }
+
+/** The editable subset of Store (everything except identity + currency). */
+export interface StoreProfile {
+  name: string;
+  address: string; phone: string; email: string; website: string; taxId: string; tagline: string;
+  logoUri: string | null;
+  receiptFooter: string; receiptTerms: string; receiptAccent: string;
+  receiptPaper: ReceiptPaper;
+  showLogo: boolean; showContact: boolean; showStaff: boolean;
+}
+
+export const DEFAULT_RECEIPT_ACCENT = '#0ca678';
+export const DEFAULT_RECEIPT_FOOTER = 'Thank you for your business!';
+
+export function profileOf(s: Store): StoreProfile {
+  return {
+    name: s.name, address: s.address ?? '', phone: s.phone ?? '', email: s.email ?? '', website: s.website ?? '',
+    taxId: s.tax_id ?? '', tagline: s.tagline ?? '', logoUri: s.logo_uri ?? null,
+    receiptFooter: s.receipt_footer ?? '', receiptTerms: s.receipt_terms ?? '',
+    receiptAccent: s.receipt_accent ?? DEFAULT_RECEIPT_ACCENT,
+    receiptPaper: s.receipt_paper ?? 'a4',
+    showLogo: (s.receipt_show_logo ?? 1) === 1, showContact: (s.receipt_show_contact ?? 1) === 1, showStaff: (s.receipt_show_staff ?? 1) === 1,
+  };
+}
+
+const clean = (v: string) => v.trim() || null;
 
 export interface Product {
   id: string;
@@ -32,6 +75,11 @@ export interface Product {
   cost_price: number;
   tax_bps: number;
   stock: number;
+  sku?: string | null;
+  unit?: string | null;
+  category_id?: string | null;
+  category_name?: string | null;
+  low_stock_threshold?: number | null;
   isQuick?: boolean; // true for ad-hoc "quick sale" lines with no catalog product
 }
 
@@ -39,8 +87,14 @@ export type PaymentMethod = 'cash' | 'card' | 'bank' | 'credit';
 
 const PRODUCT_SELECT = `
   SELECT p.id, p.name, p.barcode, p.image_uri, p.selling_price, p.cost_price, p.tax_bps,
+         p.sku, p.unit, p.category_id, p.low_stock_threshold, c.name AS category_name,
          COALESCE((SELECT SUM(sm.quantity_delta) FROM stock_movements sm WHERE sm.product_id = p.id), 0) AS stock
-  FROM products p`;
+  FROM products p LEFT JOIN categories c ON c.id = p.category_id`;
+
+/** Stock level at or below which a product counts as "low" (per-product, default 5). */
+export const DEFAULT_LOW_STOCK = 5;
+export const isLowStock = (p: Pick<Product, 'stock' | 'low_stock_threshold'>) =>
+  p.stock > 0 && p.stock <= (p.low_stock_threshold ?? DEFAULT_LOW_STOCK);
 
 export async function getStore(): Promise<Store | null> {
   return (await getDb().getFirstAsync<Store>('SELECT * FROM stores LIMIT 1')) ?? null;
@@ -49,15 +103,66 @@ export async function getStore(): Promise<Store | null> {
 export async function createStore(
   name: string,
   currency: { code: string; locale: string; decimals: number },
+  profile: Partial<StoreProfile> = {},
 ): Promise<Store> {
   const id = newId();
   const now = Date.now();
+  const p = profile;
   await getDb().runAsync(
-    `INSERT INTO stores (id,name,currency_code,currency_locale,currency_decimals,created_at,updated_at,device_id,version)
-     VALUES (?,?,?,?,?,?,?,?,1)`,
-    [id, name, currency.code, currency.locale, currency.decimals, now, now, DEVICE_ID],
+    `INSERT INTO stores (id,name,currency_code,currency_locale,currency_decimals,
+        address,phone,email,website,tax_id,tagline,logo_uri,
+        receipt_footer,receipt_terms,receipt_accent,receipt_paper,receipt_show_logo,receipt_show_contact,receipt_show_staff,
+        created_at,updated_at,device_id,version)
+     VALUES (?,?,?,?,?, ?,?,?,?,?,?,?, ?,?,?,?,?,?,?, ?,?,?,1)`,
+    [id, name, currency.code, currency.locale, currency.decimals,
+      clean(p.address ?? ''), clean(p.phone ?? ''), clean(p.email ?? ''), clean(p.website ?? ''), clean(p.taxId ?? ''), clean(p.tagline ?? ''), p.logoUri ?? null,
+      clean(p.receiptFooter ?? ''), clean(p.receiptTerms ?? ''), p.receiptAccent ?? null, p.receiptPaper ?? 'a4',
+      p.showLogo === false ? 0 : 1, p.showContact === false ? 0 : 1, p.showStaff === false ? 0 : 1,
+      now, now, DEVICE_ID],
   );
-  return { id, name, currency_code: currency.code, currency_locale: currency.locale, currency_decimals: currency.decimals };
+  return (await getStore())!;
+}
+
+/** Save the shop profile + receipt look. Bumps version so it syncs. */
+export async function updateStoreProfile(storeId: string, p: StoreProfile): Promise<Store> {
+  if (!p.name.trim()) throw new Error('Shop name is required');
+  await getDb().runAsync(
+    `UPDATE stores SET name=?, address=?, phone=?, email=?, website=?, tax_id=?, tagline=?, logo_uri=?,
+        receipt_footer=?, receipt_terms=?, receipt_accent=?, receipt_paper=?,
+        receipt_show_logo=?, receipt_show_contact=?, receipt_show_staff=?,
+        updated_at=?, version=version+1 WHERE id=?`,
+    [p.name.trim(), clean(p.address), clean(p.phone), clean(p.email), clean(p.website), clean(p.taxId), clean(p.tagline), p.logoUri,
+      clean(p.receiptFooter), clean(p.receiptTerms), p.receiptAccent || null, p.receiptPaper,
+      p.showLogo ? 1 : 0, p.showContact ? 1 : 0, p.showStaff ? 1 : 0, Date.now(), storeId],
+  );
+  return (await getStore())!;
+}
+
+/* ------------------------------ categories ------------------------------ */
+
+export interface Category { id: string; name: string }
+
+export async function listCategories(storeId: string): Promise<Category[]> {
+  return getDb().getAllAsync<Category>(
+    'SELECT id, name FROM categories WHERE store_id=? ORDER BY sort_order, name', [storeId],
+  );
+}
+
+/** Returns the existing category with this name (case-insensitive) or creates it. */
+export async function ensureCategory(storeId: string, name: string): Promise<string> {
+  const n = name.trim();
+  if (!n) throw new Error('Category name is required');
+  const db = getDb();
+  const hit = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM categories WHERE store_id=? AND lower(name)=lower(?)', [storeId, n]);
+  if (hit) return hit.id;
+  const id = newId();
+  const now = Date.now();
+  const order = (await db.getFirstAsync<{ m: number | null }>('SELECT MAX(sort_order) AS m FROM categories WHERE store_id=?', [storeId]))?.m ?? 0;
+  await db.runAsync(
+    `INSERT INTO categories (id,store_id,name,sort_order,created_at,updated_at,device_id,version) VALUES (?,?,?,?,?,?,?,1)`,
+    [id, storeId, n, order + 1, now, now, DEVICE_ID]);
+  return id;
 }
 
 export async function listProducts(storeId: string): Promise<Product[]> {
@@ -90,15 +195,20 @@ export async function createProduct(input: {
   costPrice: Minor;
   taxBps: number;
   openingStock: number;
+  sku?: string | null;
+  unit?: string | null;
+  categoryId?: string | null;
+  lowStockThreshold?: number | null;
 }): Promise<void> {
   const db = getDb();
   const id = newId();
   const now = Date.now();
   await db.withTransactionAsync(async () => {
     await db.runAsync(
-      `INSERT INTO products (id,store_id,name,barcode,image_uri,cost_price,selling_price,unit,track_inventory,tax_bps,active,created_at,updated_at,device_id,version)
-       VALUES (?,?,?,?,?,?,?,?,1,?,1,?,?,?,1)`,
-      [id, input.storeId, input.name, input.barcode?.trim() || null, input.imageUri || null, input.costPrice, input.sellingPrice, 'unit', input.taxBps, now, now, DEVICE_ID],
+      `INSERT INTO products (id,store_id,category_id,name,sku,barcode,image_uri,cost_price,selling_price,unit,track_inventory,low_stock_threshold,tax_bps,active,created_at,updated_at,device_id,version)
+       VALUES (?,?,?,?,?,?,?,?,?,?,1,?,?,1,?,?,?,1)`,
+      [id, input.storeId, input.categoryId ?? null, input.name, input.sku?.trim() || null, input.barcode?.trim() || null, input.imageUri || null,
+        input.costPrice, input.sellingPrice, input.unit?.trim() || 'unit', input.lowStockThreshold ?? null, input.taxBps, now, now, DEVICE_ID],
     );
     if (input.openingStock > 0) {
       await db.runAsync(
@@ -685,11 +795,27 @@ export async function listPurchases(storeId: string, limit = 50): Promise<Purcha
 /** Update editable product fields (used by CSV import for existing products). */
 export async function updateProductFields(input: {
   id: string; name: string; sellingPrice: Minor; costPrice: Minor; taxBps: number; barcode?: string | null;
+  // Optional: omitted keys are left untouched (CSV import only sets the basics).
+  sku?: string | null; unit?: string | null; categoryId?: string | null; lowStockThreshold?: number | null; imageUri?: string | null;
 }): Promise<void> {
+  const sets = ['name=?', 'selling_price=?', 'cost_price=?', 'tax_bps=?', 'barcode=?'];
+  const args: (string | number | null)[] = [input.name.trim(), input.sellingPrice, input.costPrice, input.taxBps, input.barcode?.trim() || null];
+  const opt = (col: string, key: keyof typeof input, val: string | number | null) => {
+    if (input[key] !== undefined) { sets.push(`${col}=?`); args.push(val); }
+  };
+  opt('sku', 'sku', input.sku?.trim() || null);
+  opt('unit', 'unit', input.unit?.trim() || 'unit');
+  opt('category_id', 'categoryId', input.categoryId ?? null);
+  opt('low_stock_threshold', 'lowStockThreshold', input.lowStockThreshold ?? null);
+  opt('image_uri', 'imageUri', input.imageUri ?? null);
   await getDb().runAsync(
-    `UPDATE products SET name=?, selling_price=?, cost_price=?, tax_bps=?, barcode=?, updated_at=?, version=version+1 WHERE id=?`,
-    [input.name.trim(), input.sellingPrice, input.costPrice, input.taxBps, input.barcode?.trim() || null, Date.now(), input.id],
+    `UPDATE products SET ${sets.join(', ')}, updated_at=?, version=version+1 WHERE id=?`,
+    [...args, Date.now(), input.id],
   );
+}
+
+export async function getProduct(id: string): Promise<Product | null> {
+  return (await getDb().getFirstAsync<Product>(`${PRODUCT_SELECT} WHERE p.id = ?`, [id])) ?? null;
 }
 
 export interface SalesExportRow {

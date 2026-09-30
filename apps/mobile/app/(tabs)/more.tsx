@@ -1,14 +1,14 @@
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, Pressable, ScrollView, Image, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSession, useRole } from '../../src/session';
 import { can, ROLE_LABEL } from '../../src/roles';
-import { useTheme, initials, type Theme } from '../../src/theme';
+import { useTheme, initials, space, type Theme } from '../../src/theme';
+import { TabHeader, scrollProps, useTabListInset } from '../../src/pos/Screen';
 
 export default function More() {
   const t = useTheme();
-  const insets = useSafeAreaInsets();
+  const listInset = useTabListInset();
   const router = useRouter();
   const store = useSession((s) => s.store)!;
   const me = useSession((s) => s.staff);
@@ -18,6 +18,7 @@ export default function More() {
   // Management links gated by the current role. Selling and sales history are
   // available to everyone; the rest need a capability.
   const allItems: { icon: keyof typeof Ionicons.glyphMap; label: string; route: string; show: boolean }[] = [
+    { icon: 'storefront-outline', label: 'Shop profile & receipts', route: '/store-settings', show: can(role, 'shop') },
     { icon: 'bar-chart-outline', label: 'Reports', route: '/reports', show: can(role, 'reports') },
     { icon: 'people-outline', label: 'Customers & credit', route: '/customers', show: can(role, 'customers') },
     { icon: 'business-outline', label: 'Suppliers', route: '/suppliers', show: can(role, 'suppliers') },
@@ -31,13 +32,18 @@ export default function More() {
   const manage = allItems.filter((m) => m.show);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 10, paddingBottom: 150 }}>
-      <Text style={[s.title, { color: t.fg }]}>More</Text>
-
-      <View style={[s.storeCard, { backgroundColor: t.panel, borderColor: t.line, boxShadow: t.shadow }]}>
-        <View style={[s.avatar, { backgroundColor: t.accent }]}><Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 18 }}>{initials(store.name)}</Text></View>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <TabHeader title="More" />
+    <ScrollView {...scrollProps} style={{ flex: 1 }} contentContainerStyle={{ padding: space.lg, paddingBottom: listInset }}>
+      <View style={[s.storeCard, { backgroundColor: t.panel, borderColor: t.line }]}>
+        {store.logo_uri ? (
+          <Image source={{ uri: store.logo_uri }} style={[s.avatar, { backgroundColor: '#fff', borderWidth: 1, borderColor: t.line }]} resizeMode="contain" />
+        ) : (
+          <View style={[s.avatar, { backgroundColor: t.accent }]}><Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 18 }}>{initials(store.name)}</Text></View>
+        )}
         <View style={{ marginLeft: 12, flex: 1 }}>
           <Text style={{ color: t.fg, fontWeight: '800', fontSize: 17 }} numberOfLines={1}>{store.name}</Text>
+          {store.tagline ? <Text style={{ color: t.muted, fontSize: 12, marginTop: 1 }} numberOfLines={1}>{store.tagline}</Text> : null}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>
             <Ionicons name="cloud-offline-outline" size={13} color={t.muted} />
             <Text style={{ color: t.muted, fontSize: 13 }}>{store.currency_code} · works offline</Text>
@@ -77,6 +83,7 @@ export default function More() {
 
       <Text style={{ color: t.faint, textAlign: 'center', marginTop: 20, fontSize: 12 }}>OpenPocket POS · v1.0 · offline-first</Text>
     </ScrollView>
+    </View>
   );
 }
 

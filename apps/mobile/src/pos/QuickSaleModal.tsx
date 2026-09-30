@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, Pressable, Modal, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fromMajorString } from '@openpocket/pos-core';
 import { useCart } from '../cart';
 import { useSession } from '../session';
@@ -12,6 +13,7 @@ import type { Product } from '../repos';
 /** Sell an ad-hoc item that isn't in the catalog (records product_id = NULL). */
 export function QuickSaleModal() {
   const t = useTheme();
+  const insets = useSafeAreaInsets();
   const cart = useCart();
   const store = useSession((s) => s.store);
   const open = useCheckoutUI((s) => s.quickOpen);
@@ -52,7 +54,7 @@ export function QuickSaleModal() {
   return (
     <Modal visible={open} animationType="slide" transparent onRequestClose={close}>
       <KeyboardAvoidingView style={s.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={[s.sheet, { backgroundColor: t.panel }]}>
+        <View style={[s.sheet, { backgroundColor: t.panel, paddingBottom: 20 + insets.bottom }]}>
           <View style={[s.grabber, { backgroundColor: t.line }]} />
           <View style={s.head}>
             <Text style={{ color: t.fg, fontSize: 19, fontWeight: '800' }}>Quick sale</Text>

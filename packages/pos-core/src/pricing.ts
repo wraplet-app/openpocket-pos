@@ -149,8 +149,8 @@ export function settlePayments(
 
 /**
  * Suggested "amount received" buttons for fast cash checkout: the exact total,
- * then the next round numbers up. `steps` are major-unit denominations
- * expressed in minor units (e.g. [5000, 10000, 20000] for Rs 50/100/200).
+ * then the next round numbers up. `steps` are denominations expressed in minor
+ * units (e.g. [500, 1000, 2000] for 5/10/20 in a 2-decimal currency).
  */
 export function suggestCashAmounts(
   grandTotal: Minor,
@@ -163,4 +163,17 @@ export function suggestCashAmounts(
     if (rounded > grandTotal && !out.includes(rounded)) out.push(rounded);
   }
   return out;
+}
+
+/**
+ * Note/coin denominations (in minor units) to round cash suggestions to, chosen
+ * from the size of the sale so the buttons are useful in any currency: small
+ * sales get 1/5/10/20/50/100, larger ones also get 500/1,000/5,000/10,000….
+ */
+export function cashSuggestionSteps(grandTotal: Minor, decimals: number): readonly Minor[] {
+  const unit = 10 ** decimals;
+  const major = grandTotal / unit;
+  const steps = [1, 5, 10, 20, 50, 100];
+  for (const big of [500, 1000, 5000, 10000, 50000]) if (major > big / 5) steps.push(big);
+  return steps.map((n) => (n * unit) as Minor);
 }

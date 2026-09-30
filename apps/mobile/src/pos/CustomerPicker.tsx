@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, Modal, FlatList, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { listCustomers, type Customer } from '../repos';
 import { useSession } from '../session';
@@ -14,6 +15,7 @@ export function CustomerPicker({ visible, onClose, onPick }: {
   onPick: (c: Customer | null) => void;
 }) {
   const t = useTheme();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const store = useSession((s) => s.store);
   const money = useMoney();
@@ -31,7 +33,7 @@ export function CustomerPicker({ visible, onClose, onPick }: {
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView style={s.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={[s.sheet, { backgroundColor: t.panel }]}>
+        <View style={[s.sheet, { backgroundColor: t.panel, paddingBottom: 20 + insets.bottom }]}>
           <View style={[s.grabber, { backgroundColor: t.line }]} />
           <View style={s.head}>
             <Text style={{ color: t.fg, fontSize: 19, fontWeight: '800' }}>Choose customer</Text>

@@ -12,7 +12,7 @@
       "package": "io.openpocket.pos",
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundColor": "#0f1115"
+        "backgroundColor": "#0fa678"
       }
     },
     "ios": {

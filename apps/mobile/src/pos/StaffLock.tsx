@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Animated, Image, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { listStaff, authenticateStaff, type Staff } from '../repos';
@@ -47,9 +47,13 @@ export function StaffLock() {
   if (!picked) {
     return (
       <View style={[st.root, { backgroundColor: t.bg, paddingTop: insets.top + 60 }]}>
-        <View style={[st.badge, { backgroundColor: t.accent }]}>
-          <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 22 }}>{initials(store.name)}</Text>
-        </View>
+        {store.logo_uri ? (
+          <Image source={{ uri: store.logo_uri }} style={[st.badge, { backgroundColor: '#fff', borderWidth: 1, borderColor: t.line }]} resizeMode="contain" />
+        ) : (
+          <View style={[st.badge, { backgroundColor: t.accent }]}>
+            <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 22 }}>{initials(store.name)}</Text>
+          </View>
+        )}
         <Text style={[st.title, { color: t.fg }]}>Who's working?</Text>
         <Text style={[st.sub, { color: t.muted }]}>Tap your name to sign in</Text>
         <View style={st.grid}>

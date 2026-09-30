@@ -24,7 +24,7 @@ function tableNames(db: DatabaseSync): string[] {
 test('runMigrations applies all schema migrations in order', async () => {
   const db = new DatabaseSync(':memory:');
   const applied = await runMigrations(adapter(db), MIGRATIONS);
-  assert.deepEqual(applied, ['0000_init', '0001_customers', '0002_returns', '0003_suppliers', '0004_staff', '0005_sync']);
+  assert.deepEqual(applied, ['0000_init', '0001_customers', '0002_returns', '0003_suppliers', '0004_staff', '0005_sync', '0006_store_profile']);
 
   const tables = tableNames(db);
   for (const t of [
@@ -84,4 +84,21 @@ test('schema enforces money CHECK constraints', async () => {
        VALUES ('p1','s1','Bad',-100,0,0,'d1',1);`,
     ),
   );
+});
+
+test('0006 adds shop profile + receipt settings with safe defaults', async () => {
+  const db = new DatabaseSync(':memory:');
+  await runMigrations(adapter(db), MIGRATIONS);
+  db.exec(
+    `INSERT INTO stores (id,name,currency_code,currency_locale,currency_decimals,created_at,updated_at,device_id,version)
+     VALUES ('s1','Shop','PKR','en-PK',2,0,0,'d1',1);`,
+  );
+  const s = db.prepare('SELECT * FROM stores WHERE id = ?').get('s1') as Record<string, unknown>;
+  assert.equal(s.receipt_paper, 'a4');
+  assert.equal(s.receipt_show_logo, 1);
+  assert.equal(s.receipt_show_contact, 1);
+  assert.equal(s.receipt_show_staff, 1);
+  for (const c of ['logo_uri', 'email', 'website', 'tax_id', 'tagline', 'receipt_footer', 'receipt_terms', 'receipt_accent']) {
+    assert.equal(s[c], null, c);
+  }
 });

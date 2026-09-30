@@ -16,8 +16,8 @@ export function Thumb({ uri, name, style, textSize = 22 }: {
     return (
       <Image
         source={uri}
-        style={[style, { backgroundColor: '#e5e7eb' }]}
-        contentFit="cover"
+        style={[style, { backgroundColor: '#ffffff' }]}
+        contentFit="contain"
         transition={150}
         cachePolicy="memory-disk"
       />

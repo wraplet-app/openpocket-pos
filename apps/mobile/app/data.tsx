@@ -1,15 +1,14 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ScrollView, Alert, ActivityIndicator, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, Pressable, Alert, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSession } from '../src/session';
 import { exportProducts, exportSales, importProducts, exportFullBackup, restoreFullBackup } from '../src/backup';
-import { useTheme, type Theme } from '../src/theme';
+import { useTheme, space, radius, type Theme } from '../src/theme';
+import { Screen } from '../src/pos/Screen';
 
 export default function DataScreen() {
   const t = useTheme();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const store = useSession((s) => s.store)!;
   const reload = useSession((s) => s.load);
@@ -36,14 +35,8 @@ export default function DataScreen() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 10 }}>
-      <View style={s.head}>
-        <Pressable onPress={() => router.back()} hitSlop={8}><Ionicons name="chevron-back" size={24} color={t.fg} /></Pressable>
-        <Text style={{ color: t.fg, fontSize: 22, fontWeight: '800' }}>Backup & CSV</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      <Text style={[s.section, { color: t.muted }]}>EXPORT</Text>
+    <Screen title="Backup & CSV">
+      <Text style={[s.section, { color: t.muted, marginTop: 0 }]}>Export</Text>
       <Group t={t}>
         <Row t={t} icon="cube-outline" title="Export products" subtitle="Share your catalog as a CSV file"
           busy={busy === 'ep'} onPress={() => run('ep', async () => {
@@ -57,7 +50,7 @@ export default function DataScreen() {
           })} />
       </Group>
 
-      <Text style={[s.section, { color: t.muted }]}>IMPORT</Text>
+      <Text style={[s.section, { color: t.muted }]}>Import</Text>
       <Group t={t}>
         <Row t={t} icon="download-outline" title="Import products" subtitle="Upload a CSV to add or update products" last
           busy={busy === 'ip'} onPress={() => run('ip', async () => {
@@ -66,7 +59,7 @@ export default function DataScreen() {
           })} />
       </Group>
 
-      <Text style={[s.section, { color: t.muted }]}>FULL BACKUP</Text>
+      <Text style={[s.section, { color: t.muted }]}>Full backup</Text>
       <Group t={t}>
         <Row t={t} icon="cloud-upload-outline" title="Back up everything" subtitle="Save a complete snapshot as a .json file"
           busy={busy === 'fb'} onPress={() => run('fb', async () => {
@@ -79,11 +72,11 @@ export default function DataScreen() {
 
       <View style={[s.note, { backgroundColor: t.accentSoft }]}>
         <Ionicons name="information-circle-outline" size={18} color={t.accent} />
-        <Text style={{ color: t.fg, marginLeft: 8, flex: 1, fontSize: 13 }}>
+        <Text style={{ color: t.fg, marginLeft: space.sm, flex: 1, fontSize: 13 }}>
           Import matches by barcode: existing products are updated (name, prices, tax), new ones are created with their opening stock. Columns: name, barcode, selling_price, cost_price, tax_percent, stock.
         </Text>
       </View>
-    </ScrollView>
+    </Screen>
   );
 }
 
@@ -97,7 +90,7 @@ function Row({ t, icon, title, subtitle, onPress, busy, last }: {
   return (
     <Pressable onPress={onPress} disabled={busy} style={[s.row, !last && { borderBottomWidth: 1, borderColor: t.line }]}>
       <View style={[s.icon, { backgroundColor: t.accentSoft }]}><Ionicons name={icon} size={20} color={t.accent} /></View>
-      <View style={{ flex: 1, marginLeft: 12 }}>
+      <View style={{ flex: 1, marginLeft: space.md }}>
         <Text style={{ color: t.fg, fontWeight: '700' }}>{title}</Text>
         <Text style={{ color: t.muted, fontSize: 12, marginTop: 2 }}>{subtitle}</Text>
       </View>
@@ -107,10 +100,9 @@ function Row({ t, icon, title, subtitle, onPress, busy, last }: {
 }
 
 const s = StyleSheet.create({
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  section: { fontSize: 12, fontWeight: '800', letterSpacing: 0.6, marginTop: 20, marginBottom: 8, marginLeft: 4 },
-  group: { borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
+  section: { fontSize: 13, fontWeight: '600', marginTop: space.xl, marginBottom: space.sm, marginLeft: space.xs },
+  group: { borderWidth: 1, borderRadius: radius.lg, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 14 },
-  icon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  note: { flexDirection: 'row', borderRadius: 14, padding: 14, marginTop: 24 },
+  icon: { width: 40, height: 40, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  note: { flexDirection: 'row', borderRadius: radius.md, padding: 14, marginTop: space.xl },
 });

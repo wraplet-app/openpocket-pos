@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text, TextInput, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { getStore, createCustomer, type Store } from '../src/repos';
-import { useTheme } from '../src/theme';
+import { useTheme, space, radius } from '../src/theme';
+import { Screen } from '../src/pos/Screen';
+import { PrimaryButton } from '../src/pos/kit';
 
 export default function AddCustomer() {
   const t = useTheme();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [store, setStore] = useState<Store | null>(null);
   const [name, setName] = useState('');
@@ -41,34 +40,19 @@ export default function AddCustomer() {
   );
 
   return (
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingTop: insets.top + 16, backgroundColor: t.bg, flexGrow: 1 }}>
-      <View style={st.head}>
-        <Pressable onPress={() => router.back()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons name="chevron-back" size={22} color={t.accent} />
-          <Text style={{ color: t.accent, fontSize: 16 }}>Back</Text>
-        </Pressable>
-        <Text style={{ color: t.fg, fontSize: 18, fontWeight: '800' }}>New customer</Text>
-        <View style={{ width: 60 }} />
-      </View>
-
-      {field('Name', name, setName, { ph: 'e.g. Ali Khan' })}
+    <Screen title="New customer" footer={<PrimaryButton label="Save customer" onPress={save} busy={busy} disabled={!store} />}>
+      {field('Name', name, setName, { ph: 'e.g. Jordan Smith' })}
       {field('Phone', phone, setPhone, { kb: 'phone-pad', ph: 'optional' })}
       {field('Email', email, setEmail, { kb: 'email-address', ph: 'optional' })}
       {field('Address', address, setAddress, { ph: 'optional' })}
       {field('Notes', notes, setNotes, { ph: 'optional', multi: true })}
 
-      {err && <Text style={{ color: t.danger, marginTop: 14 }}>{err}</Text>}
-
-      <Pressable onPress={save} disabled={busy || !store} style={[st.primary, { backgroundColor: t.accent, opacity: busy || !store ? 0.5 : 1 }]}>
-        <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 17 }}>{busy ? 'Saving…' : 'Save customer'}</Text>
-      </Pressable>
-    </ScrollView>
+      {err && <Text style={{ color: t.danger, marginTop: space.lg }}>{err}</Text>}
+    </Screen>
   );
 }
 
 const st = StyleSheet.create({
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  label: { fontSize: 13, marginTop: 16, marginBottom: 6 },
-  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
-  primary: { borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 28 },
+  label: { fontSize: 13, fontWeight: '600', marginTop: space.lg, marginBottom: space.sm },
+  input: { borderWidth: 1, borderRadius: radius.md, paddingHorizontal: space.lg, paddingVertical: 13, fontSize: 16 },
 });

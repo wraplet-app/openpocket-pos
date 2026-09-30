@@ -31,7 +31,7 @@ export interface SyncTable {
 export const SYNC_TABLES: readonly SyncTable[] = [
   {
     name: 'stores', mode: 'mutable', timeColumn: 'updated_at', scope: { kind: 'self' },
-    columns: ['id', 'name', 'currency_code', 'currency_locale', 'currency_decimals', 'address', 'phone', 'created_at', 'updated_at', 'device_id', 'version'],
+    columns: ['id', 'name', 'currency_code', 'currency_locale', 'currency_decimals', 'address', 'phone', 'email', 'website', 'tax_id', 'tagline', 'receipt_footer', 'receipt_terms', 'receipt_accent', 'receipt_paper', 'receipt_show_logo', 'receipt_show_contact', 'receipt_show_staff', 'created_at', 'updated_at', 'device_id', 'version'],
   },
   {
     name: 'categories', mode: 'mutable', timeColumn: 'updated_at', scope: { kind: 'column' },

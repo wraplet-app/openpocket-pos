@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Modal, StyleSheet, Alert } from 'react-native';
+import { View, Text, Pressable, Modal, StyleSheet, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSession } from '../session';
 import { useCheckoutUI } from '../checkoutUI';
@@ -30,7 +30,14 @@ export function ReceiptModal() {
     <Modal visible animationType="fade" transparent onRequestClose={clear}>
       <View style={s.backdrop}>
         <View style={[s.card, { backgroundColor: t.panel }]}>
-          <View style={[s.check, { backgroundColor: t.accent }]}><Ionicons name="checkmark" size={30} color={t.accentFg} /></View>
+          {store.logo_uri && (store.receipt_show_logo ?? 1) === 1 ? (
+            <View style={s.logoWrap}>
+              <Image source={{ uri: store.logo_uri }} style={s.logo} resizeMode="contain" />
+              <View style={[s.miniCheck, { backgroundColor: t.accent, borderColor: t.panel }]}><Ionicons name="checkmark" size={14} color={t.accentFg} /></View>
+            </View>
+          ) : (
+            <View style={[s.check, { backgroundColor: t.accent }]}><Ionicons name="checkmark" size={30} color={t.accentFg} /></View>
+          )}
           <Text style={{ color: t.fg, fontSize: 19, fontWeight: '800', textAlign: 'center' }}>Sale complete</Text>
           <Text style={{ color: t.muted, fontSize: 12, marginBottom: 16, textAlign: 'center' }}>{store.name} · {receipt.invoiceNo}</Text>
 
@@ -77,6 +84,9 @@ export function ReceiptModal() {
 const s = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center' },
   card: { borderRadius: 22, padding: 24, width: '88%' },
+  logoWrap: { alignSelf: 'center', marginBottom: 12 },
+  logo: { width: 64, height: 64, borderRadius: 16, backgroundColor: '#fff' },
+  miniCheck: { position: 'absolute', right: -6, bottom: -6, width: 26, height: 26, borderRadius: 13, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   check: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 12 },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },

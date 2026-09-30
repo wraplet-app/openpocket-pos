@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TextInput, Pressable, Modal, FlatList, StyleSheet, Vibration } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { computeCart, asMinor, asBps } from '@openpocket/pos-core';
@@ -11,13 +10,13 @@ import { usePurchaseDraft } from '../src/purchaseDraft';
 import { useCheckoutUI } from '../src/checkoutUI';
 import { useMoney } from '../src/pos/ui';
 import { Thumb } from '../src/pos/Thumb';
-import { useTheme, type Theme } from '../src/theme';
+import { useTheme, space, radius, type as ty } from '../src/theme';
+import { Screen, IconButton, listProps } from '../src/pos/Screen';
 
 interface ScanRow { product: Product; quantity: number }
 
 export default function Scan() {
   const t = useTheme();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const money = useMoney();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
@@ -106,42 +105,46 @@ export default function Scan() {
     router.back();
   };
 
-  if (!permission) return <View style={{ flex: 1, backgroundColor: t.bg }} />;
+  const title = isStock ? 'Restock' : 'Scan';
+  if (!permission) return <Screen title={title} scroll={false}><View /></Screen>;
   if (!permission.granted) {
     return (
-      <View style={[st.center, { backgroundColor: t.bg }]}>
-        <View style={[st.permIcon, { backgroundColor: t.accentSoft }]}><Ionicons name="camera-outline" size={30} color={t.accent} /></View>
-        <Text style={{ color: t.fg, fontWeight: '700', fontSize: 16, marginTop: 16 }}>Camera access needed</Text>
-        <Text style={{ color: t.muted, textAlign: 'center', marginTop: 6, marginBottom: 18 }}>Allow the camera to scan product barcodes.</Text>
-        <Pressable onPress={requestPermission} style={[st.grant, { backgroundColor: t.accent }]}>
-          <Text style={{ color: t.accentFg, fontWeight: '800' }}>Grant camera access</Text>
-        </Pressable>
-        <Pressable onPress={() => router.back()} style={{ marginTop: 16 }}><Text style={{ color: t.muted }}>Cancel</Text></Pressable>
-      </View>
+      <Screen title={title} scroll={false}>
+        <View style={st.center}>
+          <View style={[st.permIcon, { backgroundColor: t.accentSoft }]}><Ionicons name="camera-outline" size={30} color={t.accent} /></View>
+          <Text style={[ty.h2, { color: t.fg, marginTop: space.lg }]}>Camera access needed</Text>
+          <Text style={[ty.body, { color: t.muted, textAlign: 'center', marginTop: space.sm, marginBottom: space.xl }]}>Allow the camera to scan product barcodes.</Text>
+          <Pressable onPress={requestPermission} style={[st.grant, { backgroundColor: t.accent }]}>
+            <Text style={{ color: t.accentFg, fontWeight: '800' }}>Grant camera access</Text>
+          </Pressable>
+          <Pressable onPress={() => router.back()} style={{ marginTop: space.lg }}><Text style={{ color: t.muted }}>Cancel</Text></Pressable>
+        </View>
+      </Screen>
     );
   }
 
-  return (
-    <View style={{ flex: 1, backgroundColor: t.bg, paddingTop: insets.top + 6 }}>
-      {/* header */}
-      <View style={st.header}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Text style={{ color: t.fg, fontSize: 24, fontWeight: '800' }}>{isStock ? 'Restock' : 'Scan'}</Text>
-          <View style={[st.ready, { backgroundColor: t.accentSoft }]}>
-            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: t.accent }} />
-            <Text style={{ color: t.accent, fontWeight: '700', fontSize: 12, marginLeft: 6 }}>Ready</Text>
-          </View>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Pressable onPress={() => setTorch((v) => !v)} style={[st.iconBtn, { backgroundColor: torch ? t.accent : t.panel, borderColor: t.line }]}>
-            <Ionicons name={torch ? 'flash' : 'flash-off'} size={18} color={torch ? t.accentFg : t.fg} />
-          </Pressable>
-          <Pressable onPress={() => router.back()} style={[st.iconBtn, { backgroundColor: t.panel, borderColor: t.line }]}>
-            <Ionicons name="close" size={20} color={t.fg} />
-          </Pressable>
-        </View>
+  const checkoutBar = (
+    <Pressable onPress={finish} disabled={!isStock && count === 0}
+      style={[st.checkout, { backgroundColor: t.accent, opacity: !isStock && count === 0 ? 0.5 : 1 }]}>
+      <View style={[st.cartBadge, { backgroundColor: 'rgba(255,255,255,0.25)' }]}><Ionicons name={isStock ? 'cube' : 'cart'} size={18} color={t.accentFg} /></View>
+      <View style={{ flex: 1, marginLeft: space.md }}>
+        <Text style={{ color: t.accentFg, opacity: 0.9, fontSize: 12 }}>{count} item{count === 1 ? '' : 's'}</Text>
+        <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 18 }}>{money(totals.grandTotal)}</Text>
       </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 16 }}>{isStock ? 'Review' : 'Checkout'}</Text>
+        <Ionicons name="arrow-forward" size={18} color={t.accentFg} style={{ marginLeft: 6 }} />
+      </View>
+    </Pressable>
+  );
 
+  return (
+    <Screen
+      title={title}
+      scroll={false}
+      footer={checkoutBar}
+      right={<IconButton icon={torch ? 'flash' : 'flash-off'} label={torch ? 'Turn torch off' : 'Turn torch on'} filled={torch} onPress={() => setTorch((v) => !v)} />}
+    >
       {/* camera card */}
       <View style={[st.camCard, { borderColor: t.line }]}>
         <CameraView
@@ -151,6 +154,7 @@ export default function Scan() {
           onBarcodeScanned={onScan}
           barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39', 'code93', 'itf14', 'qr'] }}
         />
+        <View style={st.camScrim} pointerEvents="none" />
         <View style={st.camLabel} pointerEvents="none">
           <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>Scan a product</Text>
           <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 }}>Point your camera at a barcode or QR code</Text>
@@ -172,28 +176,29 @@ export default function Scan() {
 
       {/* recently added */}
       <View style={st.listHead}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={{ color: t.fg, fontWeight: '800', fontSize: 16 }}>Recently added</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+          <Text style={[ty.h2, { color: t.fg }]}>Recently added</Text>
           {count > 0 && <View style={[st.countPill, { backgroundColor: t.accentSoft }]}><Text style={{ color: t.accent, fontWeight: '800', fontSize: 12 }}>{count}</Text></View>}
         </View>
-        <Pressable onPress={() => setManualOpen(true)}><Text style={{ color: t.accent, fontWeight: '700' }}>Add item</Text></Pressable>
+        <Pressable onPress={() => setManualOpen(true)} hitSlop={8}><Text style={{ color: t.accent, fontWeight: '700' }}>Add item</Text></Pressable>
       </View>
 
       <FlatList
+        {...listProps}
         data={rows}
         keyExtractor={(r) => r.product.id}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120 }}
-        ItemSeparatorComponent={() => <View style={[st.sep, { backgroundColor: t.line }]} />}
-        ListEmptyComponent={<Text style={{ color: t.muted, textAlign: 'center', marginTop: 28 }}>Scan an item to get started.</Text>}
-        keyboardShouldPersistTaps="handled"
+        style={st.list}
+        contentContainerStyle={{ paddingHorizontal: space.lg, paddingBottom: space.lg }}
+        ItemSeparatorComponent={() => <View style={{ height: space.sm }} />}
+        ListEmptyComponent={<Text style={[ty.body, { color: t.muted, textAlign: 'center', marginTop: space.xxl }]}>Scan an item to get started.</Text>}
         renderItem={({ item }) => {
           const line = (item.product.selling_price * item.quantity) as number;
           return (
-            <View style={st.row}>
+            <View style={[st.row, { backgroundColor: t.panel, borderColor: t.line }]}>
               <Thumb uri={item.product.image_uri} name={item.product.name} style={st.thumb} textSize={15} />
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={{ color: t.fg, fontWeight: '700' }} numberOfLines={1}>{item.product.name}</Text>
-                <Text style={{ color: t.muted, fontSize: 12, marginTop: 2 }}>{money(asMinor(item.product.selling_price))} each</Text>
+              <View style={{ flex: 1, marginLeft: space.md }}>
+                <Text style={[ty.body, { color: t.fg, fontWeight: '700' }]} numberOfLines={1}>{item.product.name}</Text>
+                <Text style={[ty.small, { color: t.muted, marginTop: 2 }]}>{money(asMinor(item.product.selling_price))} each</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={{ color: t.fg, fontWeight: '800', marginBottom: 6 }}>{money(asMinor(line))}</Text>
@@ -207,22 +212,6 @@ export default function Scan() {
           );
         }}
       />
-
-      {/* checkout bar */}
-      <View style={[st.checkoutWrap, { paddingBottom: insets.bottom + 12 }]}>
-        <Pressable onPress={finish} disabled={!isStock && count === 0}
-          style={[st.checkout, { backgroundColor: t.accent, opacity: !isStock && count === 0 ? 0.5 : 1 }]}>
-          <View style={[st.cartBadge, { backgroundColor: 'rgba(255,255,255,0.25)' }]}><Ionicons name={isStock ? 'cube' : 'cart'} size={18} color={t.accentFg} /></View>
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={{ color: t.accentFg, opacity: 0.9, fontSize: 12 }}>{count} item{count === 1 ? '' : 's'}</Text>
-            <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 18 }}>{money(totals.grandTotal)}</Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 16 }}>{isStock ? 'Review' : 'Checkout'}</Text>
-            <Ionicons name="arrow-forward" size={18} color={t.accentFg} style={{ marginLeft: 6 }} />
-          </View>
-        </Pressable>
-      </View>
 
       {/* manual entry */}
       <Modal visible={manualOpen} transparent animationType="fade" onRequestClose={() => setManualOpen(false)}>
@@ -243,7 +232,7 @@ export default function Scan() {
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+    </Screen>
   );
 }
 
@@ -257,27 +246,24 @@ function cornerStyle(c: 'tl' | 'tr' | 'bl' | 'br', color: string) {
 }
 
 const st = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  camScrim: { position: 'absolute', top: 0, left: 0, right: 0, height: 78, backgroundColor: 'rgba(0,0,0,0.38)' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.xxl },
   permIcon: { width: 68, height: 68, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  grant: { borderRadius: 14, paddingVertical: 14, paddingHorizontal: 24 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 },
-  ready: { flexDirection: 'row', alignItems: 'center', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  iconBtn: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  camCard: { height: 300, marginHorizontal: 16, borderRadius: 22, borderWidth: 1, overflow: 'hidden', backgroundColor: '#000' },
+  grant: { borderRadius: radius.md, paddingVertical: 14, paddingHorizontal: space.xxl },
+  camCard: { height: 260, marginHorizontal: space.lg, marginTop: space.lg, borderRadius: radius.xl, borderWidth: 1, overflow: 'hidden', backgroundColor: '#000' },
+  list: { flex: 1 },
   camLabel: { position: 'absolute', top: 16, left: 16, right: 16 },
   reticle: { position: 'absolute', top: 90, left: 60, right: 60, bottom: 90 },
   corner: {},
   banner: { position: 'absolute', top: 16, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
   manualBtn: { position: 'absolute', bottom: 14, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16 },
-  listHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginTop: 20, marginBottom: 6 },
+  listHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: space.lg, marginTop: space.lg, marginBottom: space.sm },
   countPill: { minWidth: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  sep: { height: 1, marginLeft: 60 },
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+  row: { flexDirection: 'row', alignItems: 'center', padding: 14, borderWidth: 1, borderRadius: radius.lg },
   thumb: { width: 48, height: 48, borderRadius: 12 },
-  stepper: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 10, paddingHorizontal: 4, paddingVertical: 2, gap: 2 },
+  stepper: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: space.xs, paddingVertical: 2, gap: 2 },
   stepBtn: { width: 30, height: 28, alignItems: 'center', justifyContent: 'center' },
-  checkoutWrap: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 8 },
-  checkout: { flexDirection: 'row', alignItems: 'center', borderRadius: 18, padding: 14 },
+  checkout: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.lg, padding: 14 },
   cartBadge: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 24 },
   modalCard: { width: '100%', borderRadius: 20, padding: 20 },
