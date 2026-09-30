@@ -91,7 +91,7 @@ export default function Home() {
 
         {/* Stock alerts */}
         {alerts.length > 0 && canProducts && (
-          <Pressable onPress={() => router.push('/products')} style={[s.alert, { backgroundColor: t.panel, borderColor: t.line }]}>
+          <Pressable onPress={() => router.push(outCount > 0 ? '/products?filter=out' : '/products?filter=low')} style={[s.alert, { backgroundColor: t.panel, borderColor: t.line }]}>
             <View style={[s.alertIcon, { backgroundColor: outCount ? '#fdecec' : '#fff3e0' }]}>
               <Ionicons name="alert-circle-outline" size={20} color={outCount ? t.danger : t.warn} />
             </View>

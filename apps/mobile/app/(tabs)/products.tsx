@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import { listProducts, isLowStock, type Product } from '../../src/repos';
 import { useSession } from '../../src/session';
 import { useRole } from '../../src/session';
@@ -23,8 +23,18 @@ export default function Products() {
   const [query, setQuery] = useState('');
   const [stockFilter, setStockFilter] = useState<StockFilter>(null);
   const [category, setCategory] = useState<string | null>(null); // category id
+  const params = useLocalSearchParams<{ filter?: string }>();
 
   useFocusEffect(useCallback(() => { listProducts(store.id).then(setProducts); }, [store.id]));
+
+  // Open straight into a stock filter when arriving from the Home "Needs
+  // attention" card, then consume the param so a later tab tap doesn't re-apply it.
+  useFocusEffect(useCallback(() => {
+    if (params.filter === 'low' || params.filter === 'out') {
+      setStockFilter(params.filter);
+      router.setParams({ filter: undefined });
+    }
+  }, [params.filter]));
 
   const categories = useMemo(() => {
     const seen = new Map<string, string>();
