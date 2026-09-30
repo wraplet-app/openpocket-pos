@@ -12,6 +12,7 @@ import { can } from '../../src/roles';
 import { useMoney } from '../../src/pos/ui';
 import { useCheckoutUI } from '../../src/checkoutUI';
 import { useCart } from '../../src/cart';
+import { useCloudEntitlement } from '../../src/subscription';
 import { Thumb } from '../../src/pos/Thumb';
 import { TabHeader, IconButton, scrollProps, useTabListInset } from '../../src/pos/Screen';
 import { useTheme, space, radius, type as ty, type Theme } from '../../src/theme';
@@ -27,6 +28,7 @@ export default function Home() {
   const salesVersion = useCheckoutUI((s) => s.salesVersion);
   const role = useRole();
   const canProducts = can(role, 'products');
+  const cloud = useCloudEntitlement();
   const [stats, setStats] = useState<TodayStats>({ totalSales: 0, orders: 0, itemsSold: 0 });
   const [strip, setStrip] = useState<Product[]>([]);
   const [alerts, setAlerts] = useState<LowStockItem[]>([]);
@@ -37,7 +39,8 @@ export default function Home() {
       setStrip(r.length ? r : (await listProducts(store.id)).slice(0, 8));
     });
     lowStockProducts(store.id, 50).then(setAlerts);
-  }, [store.id, salesVersion]));
+    cloud.refresh();
+  }, [store.id, salesVersion, cloud.refresh]));
 
   const outCount = alerts.filter((a) => a.stock <= 0).length;
   const lowCount = alerts.length - outCount;
@@ -69,6 +72,22 @@ export default function Home() {
             <View style={s.todayStat}><Ionicons name="cube-outline" size={16} color={t.accentFg} /><Text style={s.todayStatTxt}>{stats.itemsSold} items sold</Text></View>
           </View>
         </Pressable>
+
+        {/* Upgrade — cloud sync (paid). Hidden once subscribed. */}
+        {!cloud.loading && !cloud.active && can(role, 'sync') && (
+          <Pressable onPress={() => router.push('/paywall')} style={[s.upgrade, { backgroundColor: t.accentSoft, borderColor: t.accent }]}>
+            <View style={[s.upgradeIcon, { backgroundColor: t.accent }]}>
+              <Ionicons name="cloud-upload-outline" size={22} color={t.accentFg} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: t.fg, fontWeight: '800', fontSize: 15 }}>Go online · $2/month</Text>
+              <Text style={{ color: t.muted, fontSize: 13, marginTop: 1 }}>Back up & sync your shop across devices</Text>
+            </View>
+            <View style={[s.upgradeCta, { backgroundColor: t.accent }]}>
+              <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 13 }}>Upgrade</Text>
+            </View>
+          </Pressable>
+        )}
 
         {/* Stock alerts */}
         {alerts.length > 0 && canProducts && (
@@ -151,6 +170,9 @@ const s = StyleSheet.create({
   todayStatTxt: { color: '#ffffff', fontWeight: '600', opacity: 0.95 },
   alert: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderWidth: 1, borderRadius: radius.lg, padding: space.md, marginTop: space.md },
   alertIcon: { width: 40, height: 40, borderRadius: radius.md - 2, alignItems: 'center', justifyContent: 'center' },
+  upgrade: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderWidth: 1, borderRadius: radius.lg, padding: space.md, marginTop: space.md },
+  upgradeIcon: { width: 40, height: 40, borderRadius: radius.md - 2, alignItems: 'center', justifyContent: 'center' },
+  upgradeCta: { borderRadius: radius.md - 2, paddingHorizontal: 14, paddingVertical: 8 },
   section: { ...ty.h1, marginTop: space.xxl, marginBottom: space.md },
   sectionText: { ...ty.h1 },
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: space.xxl, marginBottom: space.md },
