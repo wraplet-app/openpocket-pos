@@ -96,8 +96,28 @@ export const DEFAULT_LOW_STOCK = 5;
 export const isLowStock = (p: Pick<Product, 'stock' | 'low_stock_threshold'>) =>
   p.stock > 0 && p.stock <= (p.low_stock_threshold ?? DEFAULT_LOW_STOCK);
 
+/** The shop currently in use on this device (multi-shop aware). */
 export async function getStore(): Promise<Store | null> {
-  return (await getDb().getFirstAsync<Store>('SELECT * FROM stores LIMIT 1')) ?? null;
+  const db = getDb();
+  const ptr = await db.getFirstAsync<{ current_store_id: string | null }>('SELECT current_store_id FROM app_state WHERE id=1');
+  if (ptr?.current_store_id) {
+    const s = await db.getFirstAsync<Store>('SELECT * FROM stores WHERE id=?', [ptr.current_store_id]);
+    if (s) return s;
+  }
+  // No/stale pointer: fall back to the oldest shop and adopt it as current.
+  const first = await db.getFirstAsync<Store>('SELECT * FROM stores ORDER BY created_at LIMIT 1');
+  if (first) await db.runAsync('UPDATE app_state SET current_store_id=? WHERE id=1', [first.id]);
+  return first ?? null;
+}
+
+/** All shops on this device, oldest first. */
+export async function listStores(): Promise<Store[]> {
+  return getDb().getAllAsync<Store>('SELECT * FROM stores ORDER BY created_at');
+}
+
+/** Point the device at a different shop. */
+export async function setCurrentStore(id: string): Promise<void> {
+  await getDb().runAsync('UPDATE app_state SET current_store_id=? WHERE id=1', [id]);
 }
 
 export async function createStore(
@@ -120,7 +140,8 @@ export async function createStore(
       p.showLogo === false ? 0 : 1, p.showContact === false ? 0 : 1, p.showStaff === false ? 0 : 1,
       now, now, DEVICE_ID],
   );
-  return (await getStore())!;
+  await setCurrentStore(id); // a newly created shop becomes the active one
+  return (await getDb().getFirstAsync<Store>('SELECT * FROM stores WHERE id=?', [id]))!;
 }
 
 /** Save the shop profile + receipt look. Bumps version so it syncs. */
@@ -279,7 +300,7 @@ export async function checkoutSale(
 
   const now = Date.now();
   const saleId = newId();
-  const countRow = await db.getFirstAsync<{ c: number }>('SELECT COUNT(*) AS c FROM sales');
+  const countRow = await db.getFirstAsync<{ c: number }>('SELECT COUNT(*) AS c FROM sales WHERE store_id=?', [storeId]);
   const invoiceNo = `INV-${String((countRow?.c ?? 0) + 1).padStart(4, '0')}`;
 
   await db.withTransactionAsync(async () => {
@@ -349,17 +370,17 @@ function startOfToday(): number {
 
 export interface TodayStats { totalSales: number; orders: number; itemsSold: number }
 
-export async function todayStats(): Promise<TodayStats> {
+export async function todayStats(storeId: string): Promise<TodayStats> {
   const db = getDb();
   const since = startOfToday();
   const sale = await db.getFirstAsync<{ total: number; orders: number }>(
     `SELECT COALESCE(SUM(grand_total),0) AS total, COUNT(*) AS orders
-     FROM sales WHERE status='completed' AND sold_at >= ?`, [since],
+     FROM sales WHERE store_id=? AND status='completed' AND sold_at >= ?`, [storeId, since],
   );
   const items = await db.getFirstAsync<{ n: number }>(
     `SELECT COALESCE(SUM(si.quantity),0) AS n FROM sale_items si
      JOIN sales s ON s.id = si.sale_id
-     WHERE s.status='completed' AND s.sold_at >= ?`, [since],
+     WHERE s.store_id=? AND s.status='completed' AND s.sold_at >= ?`, [storeId, since],
   );
   return { totalSales: sale?.total ?? 0, orders: sale?.orders ?? 0, itemsSold: items?.n ?? 0 };
 }
@@ -369,16 +390,16 @@ export interface SaleSummary {
   payment_method: string; staff_name: string | null;
 }
 
-export async function listSales(opts: { since?: number; limit?: number } = {}): Promise<SaleSummary[]> {
-  const { since, limit = 200 } = opts;
+export async function listSales(opts: { storeId: string; since?: number; limit?: number }): Promise<SaleSummary[]> {
+  const { storeId, since, limit = 200 } = opts;
   return getDb().getAllAsync<SaleSummary>(
     `SELECT s.id, s.invoice_no, s.grand_total, s.sold_at,
             (SELECT COALESCE(SUM(quantity),0) FROM sale_items si WHERE si.sale_id = s.id) AS item_count,
             COALESCE((SELECT type FROM payments WHERE sale_id = s.id LIMIT 1), 'credit') AS payment_method,
             (SELECT name FROM staff WHERE staff.id = s.staff_id) AS staff_name
-     FROM sales s WHERE s.status='completed' ${since ? 'AND s.sold_at >= ?' : ''}
+     FROM sales s WHERE s.store_id=? AND s.status='completed' ${since ? 'AND s.sold_at >= ?' : ''}
      ORDER BY s.sold_at DESC LIMIT ?`,
-    since ? [since, limit] : [limit],
+    since ? [storeId, since, limit] : [storeId, limit],
   );
 }
 

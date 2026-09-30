@@ -44,7 +44,7 @@ export default function Sales() {
   const t = useTheme();
   const router = useRouter();
   const listInset = useTabListInset();
-  useSession((s) => s.store); // re-render if the store changes
+  const store = useSession((s) => s.store)!; // scope sales to the current shop
   const money = useMoney();
   const [sales, setSales] = useState<SaleSummary[]>([]);
   const [range, setRange] = useState<Range>('today');
@@ -52,8 +52,8 @@ export default function Sales() {
   const [q, setQ] = useState('');
 
   useFocusEffect(useCallback(() => {
-    listSales({ since: sinceFor(range) }).then(setSales);
-  }, [range]));
+    listSales({ storeId: store.id, since: sinceFor(range) }).then(setSales);
+  }, [range, store.id]));
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();

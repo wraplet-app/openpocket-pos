@@ -32,7 +32,7 @@ export default function Home() {
   const [alerts, setAlerts] = useState<LowStockItem[]>([]);
 
   useFocusEffect(useCallback(() => {
-    todayStats().then(setStats);
+    todayStats(store.id).then(setStats);
     recentlySold(store.id).then(async (r) => {
       setStrip(r.length ? r : (await listProducts(store.id)).slice(0, 8));
     });

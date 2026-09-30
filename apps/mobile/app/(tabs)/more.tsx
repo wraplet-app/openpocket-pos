@@ -11,6 +11,7 @@ export default function More() {
   const listInset = useTabListInset();
   const router = useRouter();
   const store = useSession((s) => s.store)!;
+  const stores = useSession((s) => s.stores);
   const me = useSession((s) => s.staff);
   const signOut = useSession((s) => s.signOut);
   const role = useRole();
@@ -35,7 +36,7 @@ export default function More() {
     <View style={{ flex: 1, backgroundColor: t.bg }}>
     <TabHeader title="More" />
     <ScrollView {...scrollProps} style={{ flex: 1 }} contentContainerStyle={{ padding: space.lg, paddingBottom: listInset }}>
-      <View style={[s.storeCard, { backgroundColor: t.panel, borderColor: t.line }]}>
+      <Pressable onPress={() => router.push('/shops')} style={[s.storeCard, { backgroundColor: t.panel, borderColor: t.line }]}>
         {store.logo_uri ? (
           <Image source={{ uri: store.logo_uri }} style={[s.avatar, { backgroundColor: '#fff', borderWidth: 1, borderColor: t.line }]} resizeMode="contain" />
         ) : (
@@ -46,10 +47,11 @@ export default function More() {
           {store.tagline ? <Text style={{ color: t.muted, fontSize: 12, marginTop: 1 }} numberOfLines={1}>{store.tagline}</Text> : null}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>
             <Ionicons name="cloud-offline-outline" size={13} color={t.muted} />
-            <Text style={{ color: t.muted, fontSize: 13 }}>{store.currency_code} · works offline</Text>
+            <Text style={{ color: t.muted, fontSize: 13 }}>{store.currency_code} · {stores.length > 1 ? `${stores.length} shops` : 'works offline'}</Text>
           </View>
         </View>
-      </View>
+        <Ionicons name="swap-horizontal-outline" size={20} color={t.muted} />
+      </Pressable>
 
       {me && (
         <View style={[s.userCard, { backgroundColor: t.panel, borderColor: t.line }]}>
