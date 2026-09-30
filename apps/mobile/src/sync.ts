@@ -27,7 +27,7 @@ const OVERLAP_MS = 30_000;
  * one-tap cloud backup with no URL or token to type. Empty string keeps only
  * the manual / self-host flow (enter your own server URL + token).
  */
-export const DEFAULT_SYNC_URL = '';
+export const DEFAULT_SYNC_URL = 'https://openpocket-sync.kashif-milo.workers.dev';
 
 /** True when this build ships a hosted backend, so the one-tap flow is offered. */
 export function hasHostedSync(): boolean { return DEFAULT_SYNC_URL.trim().length > 0; }

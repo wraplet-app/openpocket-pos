@@ -9,7 +9,7 @@ workers_dev = true
 [[d1_databases]]
 binding = "DB"
 database_name = "openpocket-production"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "15cc5723-14e8-4f1b-a59d-6a7c2d7a15ec"
 
 [observability]
 enabled = true
