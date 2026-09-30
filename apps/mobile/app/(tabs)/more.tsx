@@ -1,9 +1,11 @@
 import { View, Text, Pressable, ScrollView, Image, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useSession, useRole } from '../../src/session';
 import { can, ROLE_LABEL } from '../../src/roles';
-import { useTheme, initials, space, type Theme } from '../../src/theme';
+import { useCloudEntitlement } from '../../src/subscription';
+import { useTheme, initials, space, radius, type Theme } from '../../src/theme';
 import { TabHeader, scrollProps, useTabListInset } from '../../src/pos/Screen';
 
 export default function More() {
@@ -15,6 +17,8 @@ export default function More() {
   const me = useSession((s) => s.staff);
   const signOut = useSession((s) => s.signOut);
   const role = useRole();
+  const cloud = useCloudEntitlement();
+  useFocusEffect(useCallback(() => { cloud.refresh(); }, [cloud.refresh]));
 
   // Management links gated by the current role. Selling and sales history are
   // available to everyone; the rest need a capability.
@@ -27,7 +31,6 @@ export default function More() {
     { icon: 'cube-outline', label: 'All products', route: '/products', show: can(role, 'products') },
     { icon: 'receipt-outline', label: 'Sales history', route: '/sales', show: true },
     { icon: 'people-circle-outline', label: 'Staff & roles', route: '/staff', show: can(role, 'staff') },
-    { icon: 'cloud-outline', label: 'Cloud sync', route: '/cloud-sync', show: can(role, 'sync') },
     { icon: 'swap-vertical-outline', label: 'Backup & CSV', route: '/data', show: can(role, 'backup') },
   ];
   const manage = allItems.filter((m) => m.show);
@@ -67,6 +70,31 @@ export default function More() {
             <Text style={{ color: t.fg, fontWeight: '700', fontSize: 13, marginLeft: 5 }}>Lock</Text>
           </Pressable>
         </View>
+      )}
+
+      {can(role, 'sync') && (
+        <>
+          <Text style={[s.section, { color: t.muted }]}>PLAN</Text>
+          <Pressable
+            onPress={() => router.push(cloud.active ? '/cloud-sync' : '/paywall')}
+            style={[s.planCard, { backgroundColor: cloud.active ? t.panel : t.accentSoft, borderColor: cloud.active ? t.line : t.accent }]}
+          >
+            <View style={[s.planIcon, { backgroundColor: t.accent }]}>
+              <Ionicons name={cloud.active ? 'cloud-done-outline' : 'cloud-upload-outline'} size={22} color={t.accentFg} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: t.fg, fontWeight: '800', fontSize: 15 }}>
+                {cloud.active ? 'Cloud sync · Active' : 'Go online · $2/month'}
+              </Text>
+              <Text style={{ color: t.muted, fontSize: 13, marginTop: 1 }}>
+                {cloud.active ? 'Your shop is backed up & syncing' : 'Back up & sync your shop across devices'}
+              </Text>
+            </View>
+            {cloud.active
+              ? <Ionicons name="chevron-forward" size={18} color={t.faint} />
+              : <View style={[s.planCta, { backgroundColor: t.accent }]}><Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 13 }}>Upgrade</Text></View>}
+          </Pressable>
+        </>
       )}
 
       <Text style={[s.section, { color: t.muted }]}>MANAGE</Text>
@@ -111,6 +139,9 @@ const s = StyleSheet.create({
   userCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 16, padding: 12, marginTop: 10 },
   lockBtn: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12 },
   avatar: { width: 48, height: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  planCard: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 16, padding: 14 },
+  planIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  planCta: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   section: { fontSize: 12, fontWeight: '800', letterSpacing: 0.6, marginTop: 24, marginBottom: 8, marginLeft: 4 },
   group: { borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
   item: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: 14 },
