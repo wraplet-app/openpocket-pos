@@ -1,0 +1,9 @@
+# Shows a "Sponsor" button on the repo. github: must be an account/org that has
+# joined GitHub Sponsors (github.com/sponsors) — enable it there first.
+github: [wraplet-app]
+
+# Uncomment and fill any you use:
+# ko_fi: your-handle
+# buy_me_a_coffee: your-handle
+# open_collective: openpocket
+# custom: ["https://wraplet-app.github.io/openpocket-pos/"]
