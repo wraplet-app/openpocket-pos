@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="OpenPocket POS — a free, offline-first point-of-sale for your phone. Sell, print receipts, track stock and profit with no account and no internet. Optional cloud sync for $2/month.">
+<title>OpenPocket POS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: fixed top nav; centered content column; a phone-screenshot fan in the hero;
+     feature grid; screenshot rail; two-tier pricing; footer. One emerald accent throughout. */
+  :root {
+    --bg: #f4f7f5;
+    --surface: #ffffff;
+    --fg: #0d1512;
+    --muted: #5b6b63;
+    --faint: #8a998f;
+    --line: #e2e9e4;
+    --accent: #0fa678;
+    --accent-deep: #0b7d5b;
+    --accent-fg: #ffffff;
+    --accent-soft: #e3f4ee;
+    --shadow: 0 18px 40px -24px rgba(9, 60, 44, 0.45);
+    --display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
+    --body: "Instrument Sans", system-ui, -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a120f;
+      --surface: #121b17;
+      --fg: #eaf2ed;
+      --muted: #9db0a6;
+      --faint: #6f8177;
+      --line: #22302a;
+      --accent: #22c08a;
+      --accent-deep: #12a374;
+      --accent-fg: #04120c;
+      --accent-soft: #16241d;
+      --shadow: 0 18px 44px -24px rgba(0, 0, 0, 0.7);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0a120f;
+    --surface: #121b17;
+    --fg: #eaf2ed;
+    --muted: #9db0a6;
+    --faint: #6f8177;
+    --line: #22302a;
+    --accent: #22c08a;
+    --accent-deep: #12a374;
+    --accent-fg: #04120c;
+    --accent-soft: #16241d;
+    --shadow: 0 18px 44px -24px rgba(0, 0, 0, 0.7);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: var(--display); font-weight: 800; line-height: 1.05; margin: 0; text-wrap: balance; letter-spacing: -0.02em; }
+  a { color: inherit; }
+  img { max-width: 100%; display: block; }
+
+  .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-inline: 20px; }
+
+  /* Nav */
+  .nav {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: saturate(1.4) blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-in { display: flex; align-items: center; gap: 16px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: -0.02em; }
+  .logo { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); display: grid; place-items: center; color: var(--accent-fg); box-shadow: var(--shadow); }
+  .logo svg { width: 18px; height: 18px; }
+  .nav-links { margin-left: auto; display: flex; align-items: center; gap: 22px; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-weight: 500; font-size: 15px; }
+  .nav-links a:hover { color: var(--fg); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+    background: var(--accent); color: var(--accent-fg); font-weight: 700; font-family: var(--body);
+    border: none; border-radius: 12px; padding: 11px 18px; font-size: 15px; text-decoration: none;
+    box-shadow: var(--shadow); cursor: pointer; transition: transform .12s ease, background .12s ease;
+  }
+  .btn:hover { transform: translateY(-1px); background: var(--accent-deep); }
+  .btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); box-shadow: none; }
+  .btn.ghost:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
+  @media (max-width: 640px) { .nav-links .lnk { display: none; } }
+
+  /* Hero */
+  .hero { padding-block: clamp(48px, 8vw, 96px) clamp(32px, 5vw, 56px); }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent-deep);
+    background: var(--accent-soft); padding: 6px 12px; border-radius: 999px; margin-bottom: 22px;
+  }
+  :root[data-theme="dark"] .eyebrow, :root:not([data-theme="light"]) .eyebrow { color: var(--accent); }
+  .hero h1 { font-size: clamp(38px, 7vw, 68px); max-width: 15ch; }
+  .hero p.lead { font-size: clamp(17px, 2.4vw, 21px); color: var(--muted); max-width: 46ch; margin-top: 20px; }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; align-items: center; }
+  .hero-note { color: var(--faint); font-size: 14px; margin-top: 16px; }
+  .hero-note strong { color: var(--fg); font-weight: 600; }
+
+  /* Phone fan */
+  .fan { margin-top: clamp(40px, 6vw, 64px); display: flex; justify-content: center; gap: clamp(-40px, -3vw, 18px); perspective: 1400px; }
+  .phone {
+    width: clamp(150px, 26vw, 230px); border-radius: 26px; border: 1px solid var(--line);
+    background: var(--surface); box-shadow: var(--shadow); overflow: hidden; flex: none;
+    transition: transform .3s ease;
+  }
+  .phone img { width: 100%; }
+  .phone.a { transform: rotate(-6deg) translateY(14px); }
+  .phone.b { transform: translateY(-8px) scale(1.04); z-index: 2; }
+  .phone.c { transform: rotate(6deg) translateY(14px); }
+  .fan:hover .phone.a { transform: rotate(-8deg) translateY(6px); }
+  .fan:hover .phone.c { transform: rotate(8deg) translateY(6px); }
+  @media (max-width: 560px) { .phone.a, .phone.c { display: none; } .phone.b { width: 250px; transform: none; } }
+
+  /* Trust bar */
+  .facts { display: flex; flex-wrap: wrap; gap: 12px 40px; justify-content: center; padding-block: 36px; border-block: 1px solid var(--line); margin-top: clamp(40px, 6vw, 72px); }
+  .fact { text-align: center; }
+  .fact b { font-family: var(--display); font-size: 28px; display: block; color: var(--accent-deep); }
+  :root[data-theme="dark"] .fact b, :root:not([data-theme="light"]) .fact b { color: var(--accent); }
+  .fact span { font-size: 13.5px; color: var(--muted); }
+
+  /* Sections */
+  section.block { padding-block: clamp(56px, 9vw, 104px); }
+  .section-head { max-width: 34ch; margin-bottom: 44px; }
+  .section-head h2 { font-size: clamp(28px, 4.5vw, 44px); }
+  .section-head p { color: var(--muted); margin-top: 14px; font-size: 18px; }
+
+  /* Feature grid */
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 880px) { .features { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .features { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px;
+    min-width: 0;
+  }
+  .card .ic { width: 42px; height: 42px; border-radius: 12px; background: var(--accent-soft); color: var(--accent-deep); display: grid; place-items: center; margin-bottom: 16px; }
+  :root[data-theme="dark"] .card .ic, :root:not([data-theme="light"]) .card .ic { color: var(--accent); }
+  .card .ic svg { width: 22px; height: 22px; }
+  .card h3 { font-size: 18px; }
+  .card p { color: var(--muted); font-size: 15px; margin: 8px 0 0; }
+
+  /* Showcase rail */
+  .rail { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x mandatory; margin-inline: -20px; padding-inline: 20px; }
+  .rail::-webkit-scrollbar { height: 8px; }
+  .rail::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+  .shot { flex: none; width: 240px; scroll-snap-align: start; }
+  .shot img { border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--surface); }
+  .shot span { display: block; margin-top: 12px; font-size: 14px; color: var(--muted); font-weight: 500; }
+
+  /* Pricing */
+  .prices { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
+  @media (max-width: 620px) { .prices { grid-template-columns: 1fr; } }
+  .price { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 30px; display: flex; flex-direction: column; }
+  .price.hot { border-color: var(--accent); box-shadow: var(--shadow); }
+  .price .tag { font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .price .amt { font-family: var(--display); font-size: 46px; font-weight: 800; margin: 12px 0 2px; letter-spacing: -0.03em; }
+  .price .amt small { font-size: 17px; color: var(--muted); font-weight: 500; font-family: var(--body); }
+  .price ul { list-style: none; padding: 0; margin: 20px 0 26px; display: grid; gap: 11px; }
+  .price li { display: flex; gap: 10px; font-size: 15px; color: var(--fg); }
+  .price li svg { width: 19px; height: 19px; color: var(--accent); flex: none; margin-top: 2px; }
+  .price .btn { margin-top: auto; width: 100%; }
+
+  /* Open source strip */
+  .os { background: var(--accent-soft); border: 1px solid var(--line); border-radius: 24px; padding: clamp(28px, 5vw, 48px); text-align: center; }
+  :root[data-theme="dark"] .os, :root:not([data-theme="light"]) .os { background: var(--surface); }
+  .os h2 { font-size: clamp(26px, 4vw, 38px); max-width: 20ch; margin-inline: auto; }
+  .os p { color: var(--muted); max-width: 52ch; margin: 14px auto 26px; }
+  .stack { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 26px; }
+  .chip { font-size: 13px; font-weight: 500; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 6px 13px; }
+
+  footer { border-top: 1px solid var(--line); padding-block: 34px; margin-top: 20px; }
+  .foot-in { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; color: var(--muted); font-size: 14px; }
+  .foot-in a { color: var(--muted); text-decoration: none; }
+  .foot-in a:hover { color: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="wrap nav-in">
+    <span class="brand">
+      <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9.5 12 4l8 5.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5Z" fill="currentColor"/><rect x="8.5" y="13" width="7" height="8" rx="1" fill="var(--accent)"/></svg></span>
+      OpenPocket
+    </span>
+    <span class="nav-links">
+      <a class="lnk" href="#features">Features</a>
+      <a class="lnk" href="#screens">Screens</a>
+      <a class="lnk" href="#pricing">Pricing</a>
+      <a class="btn" href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">View on GitHub</a>
+    </span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Offline-first point of sale</span>
+    <h1>Run your shop from your pocket.</h1>
+    <p class="lead">Sell, print receipts, track stock and see your profit — from an Android or iOS phone. No account, no internet required.</p>
+    <div class="hero-cta">
+      <a class="btn" href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 8.8 21.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.300005-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.8-2.4 4.6-4.6 4.9.3.3.6.9.6 1.8v2.7c0 .3.2.6.7.5A10 10 0 0 0 12 2Z"/></svg>
+        Get the code
+      </a>
+      <a class="btn ghost" href="#pricing">See pricing</a>
+    </div>
+    <p class="hero-note"><strong>Free forever</strong> for offline selling · optional cloud sync $2/month</p>
+
+    <div class="fan">
+      <div class="phone a"><img src="screenshots/02-products.png" alt="Product catalog with photos" loading="lazy"></div>
+      <div class="phone b"><img src="screenshots/01-home.png" alt="Home dashboard showing today's sales" loading="lazy"></div>
+      <div class="phone c"><img src="screenshots/05-reports.png" alt="Sales reports and profit" loading="lazy"></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="facts">
+    <div class="fact"><b>$0</b><span>to sell, forever</span></div>
+    <div class="fact"><b>0</b><span>internet required</span></div>
+    <div class="fact"><b>&lt;1s</b><span>to ring up a sale</span></div>
+    <div class="fact"><b>MIT</b><span>open source</span></div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="block" id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Everything a counter needs. Nothing it doesn't.</h2>
+      <p>Built for mini marts, grocers, cafés, kiosks and home businesses — the shops that can't wait for a connection.</p>
+    </div>
+    <div class="features">
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 4 6v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V6l-2-4Z"/><path d="M4 6h16M9 10a3 3 0 0 0 6 0"/></svg></div><h3>Fast billing</h3><p>Tap or scan items into a cart. Cash, card, transfer or store credit, with change and quick-cash suggestions.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3.3 7 8.7 5 8.7-5M12 12v10"/><path d="M3.3 7 12 2l8.7 5v10L12 22l-8.7-5Z"/></svg></div><h3>Real inventory</h3><p>Photos, categories, SKUs, barcodes and per-product low-stock and out-of-stock alerts.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M11 5v14M15 9v6M18 9v6"/></svg></div><h3>Barcode scanning</h3><p>Scan to sell or to add a product. A built-in lookup fills the name and image, saved for offline use.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M15 8a3 3 0 1 0 0-.01M2 21a7 7 0 0 1 14 0M15 14a7 7 0 0 1 7 7"/></svg></div><h3>Staff &amp; roles</h3><p>Owner, manager and cashier PINs. Every sale is attributed to the cashier — on screen and on the receipt.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V4h12v5M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg></div><h3>Receipts &amp; invoices</h3><p>Thermal 58/80mm or A4, themed to your shop. Print over Bluetooth, Wi-Fi or USB, or share a PDF invoice.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M7 15l4-5 3 3 5-7"/></svg></div><h3>Reports &amp; profit</h3><p>Daily, weekly and monthly sales, gross profit, refunds, discounts, payment mix and best sellers.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9 12 3l9 6v10a1 1 0 0 1-1 1h-4v-7H8v7H4a1 1 0 0 1-1-1Z"/></svg></div><h3>Multiple shops</h3><p>Run several separate shops on one device — each with its own products, staff, receipts and books.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 16a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.4A4.5 4.5 0 0 1 18 16Z"/><path d="M12 12v6m-2.5-2.5L12 18l2.5-2.5"/></svg></div><h3>Cloud sync <em>(optional)</em></h3><p>Back up your shop and sync across devices for $2/month. Offline selling stays free.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9c0-.5 0-1-.1-1.5A6 6 0 0 1 12 3Z"/></svg></div><h3>Dark mode</h3><p>Full light and dark theming across every screen, so the counter is easy on the eyes at any hour.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENS -->
+<section class="block" id="screens" style="padding-top:0">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>See it in action</h2>
+      <p>The real app running a demo grocery — 24 products, staff and a day of sales.</p>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="rail">
+      <div class="shot"><img src="screenshots/03-checkout.png" alt="Checkout screen"><span>Checkout &amp; payment</span></div>
+      <div class="shot"><img src="screenshots/02-products.png" alt="Products"><span>Product catalog</span></div>
+      <div class="shot"><img src="screenshots/05-reports.png" alt="Reports"><span>Reports &amp; profit</span></div>
+      <div class="shot"><img src="screenshots/04-sale-detail.png" alt="Sale detail"><span>Sale detail &amp; refunds</span></div>
+      <div class="shot"><img src="screenshots/06-sales.png" alt="Sales history"><span>Sales history</span></div>
+      <div class="shot"><img src="screenshots/07-staff-lock.png" alt="Staff sign-in"><span>Staff sign-in</span></div>
+      <div class="shot"><img src="screenshots/08-cart-products.png" alt="Building a cart"><span>Building a cart</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="block" id="pricing" style="padding-top:0">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Honest pricing</h2>
+      <p>The whole point-of-sale is free. You only pay if you want your shop backed up online.</p>
+    </div>
+    <div class="prices">
+      <div class="price">
+        <span class="tag">Offline POS</span>
+        <div class="amt">$0<small> / forever</small></div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Unlimited products &amp; sales</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Barcode scanning &amp; inventory</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Staff PINs, receipts &amp; reports</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Multiple shops on one device</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> No account, works fully offline</li>
+        </ul>
+        <a class="btn ghost" href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">Start free</a>
+      </div>
+      <div class="price hot">
+        <span class="tag" style="color:var(--accent-deep)">Cloud sync · popular</span>
+        <div class="amt">$2<small> / month</small></div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Everything in the free plan</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Automatic cloud backup</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Sync across phones &amp; tablets</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Restore on a new device in seconds</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Cancel anytime</li>
+        </ul>
+        <a class="btn" href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">Get OpenPocket</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OPEN SOURCE -->
+<section class="block" style="padding-top:0">
+  <div class="wrap">
+    <div class="os">
+      <h2>Open source, and correct where it counts.</h2>
+      <p>Money is always integer minor units, never floating point — so tax, discounts and change are exact. Read every line, run it yourself, or build on it.</p>
+      <a class="btn" href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">Explore the repository</a>
+      <div class="stack">
+        <span class="chip">React Native</span>
+        <span class="chip">Expo</span>
+        <span class="chip">TypeScript</span>
+        <span class="chip">SQLite</span>
+        <span class="chip">Cloudflare Workers</span>
+        <span class="chip">MIT licensed</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <span class="brand" style="font-size:16px"><span class="logo" style="width:24px;height:24px" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9.5 12 4l8 5.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5Z" fill="currentColor"/></svg></span> OpenPocket POS</span>
+    <span>Free &amp; offline-first · MIT licensed</span>
+    <a href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">github.com/wraplet-app/openpocket-pos</a>
+  </div>
+</footer>
+</body>
+</html>
