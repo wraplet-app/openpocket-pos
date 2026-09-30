@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, Text, Pressable, Alert, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { showAlert } from '../../src/pos/alert';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { roundHalfAwayFromZero, asMinor, type Minor } from '@openpocket/pos-core';
@@ -53,10 +54,10 @@ export default function SaleDetailScreen() {
     try {
       const list = Object.entries(picks).filter(([, q]) => q > 0).map(([saleItemId, quantity]) => ({ saleItemId, quantity }));
       const r = await processReturn(store.id, detail.header.id, list, method);
-      Alert.alert('Return processed', `Refunded ${money(r.grandTotal)} via ${method === 'account' ? 'customer account' : method}.`);
+      showAlert('Return processed', `Refunded ${money(r.grandTotal)} via ${method === 'account' ? 'customer account' : method}.`);
       refresh();
     } catch (e) {
-      Alert.alert('Could not process return', e instanceof Error ? e.message : String(e));
+      showAlert('Could not process return', e instanceof Error ? e.message : String(e));
     } finally { setBusy(false); }
   };
 
@@ -76,11 +77,11 @@ export default function SaleDetailScreen() {
   };
   const reprint = () => {
     const p = printable(); if (!p) return;
-    printInvoice(store, p).catch((e) => Alert.alert('Print failed', e instanceof Error ? e.message : String(e)));
+    printInvoice(store, p).catch((e) => showAlert('Print failed', e instanceof Error ? e.message : String(e)));
   };
   const sharePdf = () => {
     const p = printable(); if (!p) return;
-    shareInvoicePdf(store, p).catch((e) => Alert.alert('Share failed', e instanceof Error ? e.message : String(e)));
+    shareInvoicePdf(store, p).catch((e) => showAlert('Share failed', e instanceof Error ? e.message : String(e)));
   };
 
   if (!detail) return <Screen title="Sale"><View /></Screen>;

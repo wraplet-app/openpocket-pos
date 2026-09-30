@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Text, TextInput, Pressable, Alert, ActivityIndicator, Share, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, ActivityIndicator, Share, StyleSheet } from 'react-native';
+import { showAlert } from '../src/pos/alert';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -42,14 +43,14 @@ export default function CloudSync() {
   const run = async (key: string, fn: () => Promise<void>) => {
     if (busy) return;
     setBusy(key);
-    try { await fn(); } catch (e) { Alert.alert('Sync error', e instanceof Error ? e.message : String(e)); }
+    try { await fn(); } catch (e) { showAlert('Sync error', e instanceof Error ? e.message : String(e)); }
     finally { setBusy(null); refresh(); }
   };
 
   // --- one-tap hosted actions ---
   const turnOn = () => run('on', async () => {
     await turnOnCloudBackup();
-    Alert.alert('Cloud backup is on', 'Your shop is backed up. Use your shop code to add another device.');
+    showAlert('Cloud backup is on', 'Your shop is backed up. Use your shop code to add another device.');
   });
   const sync = () => run('sync', async () => { await syncNow(); });
   const shareCode = async () => {
@@ -57,37 +58,37 @@ export default function CloudSync() {
     try { await Share.share({ message: `Add this device to my OpenPocket shop with code: ${shopCode}` }); } catch { /* dismissed */ }
   };
   const link = () => {
-    if (!linkCode.trim()) { Alert.alert('Enter a shop code', 'Paste the code shown on your other device.'); return; }
-    Alert.alert('Link this device?', 'This REPLACES all data on this device with the shop from the cloud. Use it on a new or spare phone.', [
+    if (!linkCode.trim()) { showAlert('Enter a shop code', 'Paste the code shown on your other device.'); return; }
+    showAlert('Link this device?', 'This REPLACES all data on this device with the shop from the cloud. Use it on a new or spare phone.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Replace & link', style: 'destructive', onPress: () => run('link', async () => {
         const n = await linkDeviceByCode(linkCode);
         await reload(); router.replace('/');
-        Alert.alert('Device linked', `Pulled ${n} records for this shop.`);
+        showAlert('Device linked', `Pulled ${n} records for this shop.`);
       }) },
     ]);
   };
 
   // --- manual / self-host actions ---
   const connectAndSync = () => run('sync', async () => {
-    if (!url.trim() || !token.trim()) { Alert.alert('Missing details', 'Enter both the server URL and a token.'); return; }
+    if (!url.trim() || !token.trim()) { showAlert('Missing details', 'Enter both the server URL and a token.'); return; }
     await saveSyncConfig(url, token);
     await syncNow();
-    Alert.alert('Synced', 'Cloud sync is on. Last synced just now.');
+    showAlert('Synced', 'Cloud sync is on. Last synced just now.');
   });
   const restore = () => {
-    if (!url.trim() || !token.trim()) { Alert.alert('Missing details', 'Enter the server URL and the token from your other device.'); return; }
-    Alert.alert('Restore from cloud', 'This REPLACES all data on this device with the store from the cloud.', [
+    if (!url.trim() || !token.trim()) { showAlert('Missing details', 'Enter the server URL and the token from your other device.'); return; }
+    showAlert('Restore from cloud', 'This REPLACES all data on this device with the store from the cloud.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Replace & pull', style: 'destructive', onPress: () => run('restore', async () => {
         const n = await restoreFromCloud(url, token);
         await reload(); router.replace('/');
-        Alert.alert('Device linked', `Pulled ${n} records from the cloud.`);
+        showAlert('Device linked', `Pulled ${n} records from the cloud.`);
       }) },
     ]);
   };
 
-  const disconnect = () => Alert.alert('Turn off cloud backup?', 'Your data stays on this device; it just stops syncing.', [
+  const disconnect = () => showAlert('Turn off cloud backup?', 'Your data stays on this device; it just stops syncing.', [
     { text: 'Cancel', style: 'cancel' },
     { text: 'Turn off', style: 'destructive', onPress: () => run('off', async () => { await disconnectSync(); }) },
   ]);

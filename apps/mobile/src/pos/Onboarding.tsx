@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, Pressable, Animated, useWindowDimensions,
-  useColorScheme, StyleSheet, KeyboardAvoidingView, ScrollView, Alert,
+  useColorScheme, StyleSheet, KeyboardAvoidingView, ScrollView,
 } from 'react-native';
+import { showAlert } from './alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { createStore, type StoreProfile } from '../repos';
@@ -123,7 +124,7 @@ function SetupForm({ t, insets, onCreated }: { t: Theme; insets: { top: number; 
       await createStore(profile.name.trim(), currency, { ...profile, name: profile.name.trim() });
       onCreated();
     } catch (e) {
-      Alert.alert('Could not create shop', e instanceof Error ? e.message : String(e));
+      showAlert('Could not create shop', e instanceof Error ? e.message : String(e));
       setBusy(false);
     }
   };
@@ -136,7 +137,7 @@ function SetupForm({ t, insets, onCreated }: { t: Theme; insets: { top: number; 
       await seedDemoData();
       onCreated();
     } catch (e) {
-      Alert.alert('Could not load demo', e instanceof Error ? e.message : String(e));
+      showAlert('Could not load demo', e instanceof Error ? e.message : String(e));
       setBusy(false);
     }
   };

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Alert } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
+import { showAlert } from '../src/pos/alert';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSession, useRole, currencyOf } from '../src/session';
@@ -36,14 +37,14 @@ export default function StoreSettings() {
 
   const save = async () => {
     if (busy) return;
-    if (!profile.name.trim()) { Alert.alert('Shop name is required'); return; }
+    if (!profile.name.trim()) { showAlert('Shop name is required'); return; }
     setBusy(true);
     try {
       await updateStoreProfile(store.id, profile);
       await reload();
       router.back();
     } catch (e) {
-      Alert.alert('Could not save', e instanceof Error ? e.message : String(e));
+      showAlert('Could not save', e instanceof Error ? e.message : String(e));
       setBusy(false);
     }
   };

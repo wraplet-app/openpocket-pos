@@ -7,6 +7,7 @@ import { initDatabase } from '../src/db';
 import { useSession, useLocked } from '../src/session';
 import { Onboarding } from '../src/pos/Onboarding';
 import { StaffLock } from '../src/pos/StaffLock';
+import { AlertHost } from '../src/pos/alert';
 import { useTheme } from '../src/theme';
 
 export default function RootLayout() {
@@ -52,6 +53,7 @@ export default function RootLayout() {
       ) : (
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.bg } }} />
       )}
+      <AlertHost />
     </SafeAreaProvider>
   );
 }

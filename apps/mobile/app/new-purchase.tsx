@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, Text, TextInput, Pressable, FlatList, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, FlatList, StyleSheet } from 'react-native';
+import { showAlert } from '../src/pos/alert';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { fromMajorString, asMinor } from '@openpocket/pos-core';
@@ -55,10 +56,10 @@ export default function NewPurchase() {
         .map((p) => ({ productId: p.id, name: p.name, quantity: draft.qty[p.id]!, unitCost: asMinor(parseCost(p.id)) }));
       const r = await createPurchase(store.id, draft.supplierId, lines);
       draft.reset();
-      Alert.alert('Purchase received', `${r.referenceNo} · ${r.itemCount} item${r.itemCount === 1 ? '' : 's'} · ${money(r.total)}. Stock updated.`);
+      showAlert('Purchase received', `${r.referenceNo} · ${r.itemCount} item${r.itemCount === 1 ? '' : 's'} · ${money(r.total)}. Stock updated.`);
       router.back();
     } catch (e) {
-      Alert.alert('Could not save purchase', e instanceof Error ? e.message : String(e));
+      showAlert('Could not save purchase', e instanceof Error ? e.message : String(e));
       setBusy(false);
     }
   };

@@ -5,7 +5,8 @@
  *   ReceiptFields      paper size, accent color, footer, terms, what to show
  *   ReceiptPreview     a live mock receipt that follows every change
  */
-import { View, Text, TextInput, Pressable, Switch, Image, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, Switch, Image, StyleSheet } from 'react-native';
+import { showAlert } from './alert';
 import { Ionicons } from '@expo/vector-icons';
 import { asMinor, format, type CurrencyConfig } from '@openpocket/pos-core';
 import type { StoreProfile, ReceiptPaper } from '../repos';
@@ -43,7 +44,7 @@ function LogoPicker({ t, value, onChange }: Props & { t: Theme }) {
     try {
       const uri = await pickLogo();
       if (uri) onChange({ logoUri: uri });
-    } catch (e) { Alert.alert('Could not pick logo', e instanceof Error ? e.message : String(e)); }
+    } catch (e) { showAlert('Could not pick logo', e instanceof Error ? e.message : String(e)); }
   };
   return (
     <View style={{ alignItems: 'center' }}>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Text, View, Pressable, Alert, StyleSheet } from 'react-native';
+import { Text, View, Pressable, StyleSheet } from 'react-native';
+import { showAlert } from '../src/pos/alert';
 import { useRouter } from 'expo-router';
 import { createStore, DEFAULT_RECEIPT_ACCENT, type StoreProfile } from '../src/repos';
 import { useSession } from '../src/session';
@@ -32,7 +33,7 @@ export default function NewShop() {
       await reload();          // new shop is now the active one (created as current)
       router.replace('/');     // fresh shop has no staff yet → straight to Home
     } catch (e) {
-      Alert.alert('Could not create shop', e instanceof Error ? e.message : String(e));
+      showAlert('Could not create shop', e instanceof Error ? e.message : String(e));
       setBusy(false);
     }
   };

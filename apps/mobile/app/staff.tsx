@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Text, Pressable, FlatList, Alert, StyleSheet } from 'react-native';
+import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native';
+import { showAlert } from '../src/pos/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,11 +27,11 @@ export default function StaffScreen() {
   useFocusEffect(reload);
 
   const confirmDelete = (m: Staff) => {
-    Alert.alert('Remove staff', `Remove ${m.name}? Their past sales stay on record.`, [
+    showAlert('Remove staff', `Remove ${m.name}? Their past sales stay on record.`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Remove', style: 'destructive', onPress: async () => {
         try { await deleteStaff(store.id, m.id); reload(); }
-        catch (e) { Alert.alert('Cannot remove', e instanceof Error ? e.message : String(e)); }
+        catch (e) { showAlert('Cannot remove', e instanceof Error ? e.message : String(e)); }
       } },
     ]);
   };

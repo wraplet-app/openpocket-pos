@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, Pressable, Image, Alert, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, Image, ActivityIndicator, StyleSheet } from 'react-native';
+import { showAlert } from '../src/pos/alert';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { fromMajorString, toMajorNumber, asMinor } from '@openpocket/pos-core';
@@ -73,22 +74,22 @@ export default function AddProduct() {
     setLooking(true);
     try {
       const info = await lookupBarcode(bc);
-      if (!info) { if (!silent) Alert.alert('Not found', 'No match for this barcode in the product database.'); return; }
+      if (!info) { if (!silent) showAlert('Not found', 'No match for this barcode in the product database.'); return; }
       if (info.name) setName((prev) => prev.trim() ? prev : info.name!);
       if (info.imageUrl && !imageUri) {
         const local = await downloadProductImage(info.imageUrl);
         if (local) setImageUri(local);
       }
-      if (!silent && !info.name && !info.imageUrl) Alert.alert('Not found', 'No details available for this barcode.');
+      if (!silent && !info.name && !info.imageUrl) showAlert('Not found', 'No details available for this barcode.');
     } catch {
-      if (!silent) Alert.alert('Lookup failed', 'Could not reach the product database. Check your connection.');
+      if (!silent) showAlert('Lookup failed', 'Could not reach the product database. Check your connection.');
     } finally { setLooking(false); }
   };
 
   // Android's native Alert renders at most 3 buttons, so keep it to
   // Camera / Gallery / Cancel and expose Remove as an ✕ on the preview.
   const chooseImage = () => {
-    Alert.alert('Product photo', undefined, [
+    showAlert('Product photo', undefined, [
       { text: 'Take photo', onPress: async () => { const u = await takePhoto(); if (u) setImageUri(u); } },
       { text: 'Choose from gallery', onPress: async () => { const u = await pickFromGallery(); if (u) setImageUri(u); } },
       { text: 'Cancel', style: 'cancel' as const },

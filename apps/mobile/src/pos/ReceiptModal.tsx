@@ -1,4 +1,5 @@
-import { View, Text, Pressable, Modal, StyleSheet, Alert, Image } from 'react-native';
+import { View, Text, Pressable, Modal, StyleSheet, Image } from 'react-native';
+import { showAlert } from './alert';
 import { Ionicons } from '@expo/vector-icons';
 import { useSession } from '../session';
 import { useCheckoutUI } from '../checkoutUI';
@@ -23,8 +24,8 @@ export function ReceiptModal() {
     received: isCredit ? undefined : receipt.received, change: isCredit ? undefined : receipt.change,
     staffName: staff?.name,
   });
-  const share = () => shareInvoicePdf(store, printable()).catch((e) => Alert.alert('Share failed', e instanceof Error ? e.message : String(e)));
-  const print = () => printInvoice(store, printable()).catch((e) => Alert.alert('Print failed', e instanceof Error ? e.message : String(e)));
+  const share = () => shareInvoicePdf(store, printable()).catch((e) => showAlert('Share failed', e instanceof Error ? e.message : String(e)));
+  const print = () => printInvoice(store, printable()).catch((e) => showAlert('Print failed', e instanceof Error ? e.message : String(e)));
 
   return (
     <Modal visible animationType="fade" transparent onRequestClose={clear}>

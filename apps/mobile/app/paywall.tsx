@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, Alert, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
+import { showAlert } from '../src/pos/alert';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { billingAvailable, getMonthlyPlan, purchaseMonthly, restorePurchases, devUnlock, type Plan } from '../src/subscription';
@@ -30,9 +31,9 @@ export default function Paywall() {
     try {
       const ok = await purchaseMonthly(plan);
       if (ok) router.replace('/cloud-sync');
-      else Alert.alert('Not completed', 'The purchase did not finish. You have not been charged.');
+      else showAlert('Not completed', 'The purchase did not finish. You have not been charged.');
     } catch (e: any) {
-      if (!e?.userCancelled) Alert.alert('Purchase failed', e?.message ?? 'Please try again.');
+      if (!e?.userCancelled) showAlert('Purchase failed', e?.message ?? 'Please try again.');
     } finally { setBusy(false); }
   };
 
@@ -41,7 +42,7 @@ export default function Paywall() {
     try {
       const ok = await restorePurchases();
       if (ok) router.replace('/cloud-sync');
-      else Alert.alert('Nothing to restore', 'No active cloud-sync subscription was found on this account.');
+      else showAlert('Nothing to restore', 'No active cloud-sync subscription was found on this account.');
     } finally { setBusy(false); }
   };
 

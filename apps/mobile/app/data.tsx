@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Alert, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
+import { showAlert } from '../src/pos/alert';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSession } from '../src/session';
@@ -15,14 +16,14 @@ export default function DataScreen() {
   const [busy, setBusy] = useState<string | null>(null);
 
   const confirmRestore = () => {
-    Alert.alert('Restore from backup', 'This replaces ALL current data — products, sales, customers and staff — with the backup file. This cannot be undone.', [
+    showAlert('Restore from backup', 'This replaces ALL current data — products, sales, customers and staff — with the backup file. This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Choose file', style: 'destructive', onPress: () => run('rs', async () => {
         const r = await restoreFullBackup();
         if (!r) return;
         await reload();
         router.replace('/');
-        Alert.alert('Restore complete', `Restored ${r.rows} records across ${r.tables} tables.`);
+        showAlert('Restore complete', `Restored ${r.rows} records across ${r.tables} tables.`);
       }) },
     ]);
   };
@@ -30,7 +31,7 @@ export default function DataScreen() {
   const run = async (key: string, fn: () => Promise<void>) => {
     if (busy) return;
     setBusy(key);
-    try { await fn(); } catch (e) { Alert.alert('Something went wrong', e instanceof Error ? e.message : String(e)); }
+    try { await fn(); } catch (e) { showAlert('Something went wrong', e instanceof Error ? e.message : String(e)); }
     finally { setBusy(null); }
   };
 
@@ -41,12 +42,12 @@ export default function DataScreen() {
         <Row t={t} icon="cube-outline" title="Export products" subtitle="Share your catalog as a CSV file"
           busy={busy === 'ep'} onPress={() => run('ep', async () => {
             const n = await exportProducts(store);
-            if (n === 0) Alert.alert('Nothing to export', 'You have no products yet.');
+            if (n === 0) showAlert('Nothing to export', 'You have no products yet.');
           })} />
         <Row t={t} icon="receipt-outline" title="Export sales" subtitle="Share all sales line items as CSV" last
           busy={busy === 'es'} onPress={() => run('es', async () => {
             const n = await exportSales(store);
-            if (n === 0) Alert.alert('Nothing to export', 'You have no sales yet.');
+            if (n === 0) showAlert('Nothing to export', 'You have no sales yet.');
           })} />
       </Group>
 
@@ -55,7 +56,7 @@ export default function DataScreen() {
         <Row t={t} icon="download-outline" title="Import products" subtitle="Upload a CSV to add or update products" last
           busy={busy === 'ip'} onPress={() => run('ip', async () => {
             const r = await importProducts(store);
-            if (r) Alert.alert('Import complete', `${r.created} added · ${r.updated} updated · ${r.skipped} skipped.`);
+            if (r) showAlert('Import complete', `${r.created} added · ${r.updated} updated · ${r.skipped} skipped.`);
           })} />
       </Group>
 
@@ -64,7 +65,7 @@ export default function DataScreen() {
         <Row t={t} icon="cloud-upload-outline" title="Back up everything" subtitle="Save a complete snapshot as a .json file"
           busy={busy === 'fb'} onPress={() => run('fb', async () => {
             const n = await exportFullBackup(store);
-            if (n === 0) Alert.alert('Nothing to back up', 'Your store has no data yet.');
+            if (n === 0) showAlert('Nothing to back up', 'Your store has no data yet.');
           })} />
         <Row t={t} icon="cloud-download-outline" title="Restore from backup" subtitle="Replace all data with a backup file" last
           busy={busy === 'rs'} onPress={confirmRestore} />

@@ -1,4 +1,5 @@
-import { View, Text, Pressable, Image, Alert, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
+import { showAlert } from '../src/pos/alert';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSession } from '../src/session';
@@ -21,8 +22,8 @@ export default function Shops() {
   };
 
   const logout = () => {
-    if (!me) { Alert.alert('Not signed in', 'Add staff with PINs to enable sign-in.'); return; }
-    Alert.alert('Log out?', `Sign ${me.name} out. Anyone will need a PIN to use this shop again.`, [
+    if (!me) { showAlert('Not signed in', 'Add staff with PINs to enable sign-in.'); return; }
+    showAlert('Log out?', `Sign ${me.name} out. Anyone will need a PIN to use this shop again.`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Log out', style: 'destructive', onPress: () => { signOut(); router.replace('/'); } },
     ]);
