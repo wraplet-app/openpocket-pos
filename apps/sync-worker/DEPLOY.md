@@ -68,12 +68,14 @@ the app's paywall, not the server. Before opening sync to the public, add
 **server-side entitlement verification** so non-subscribers can't use the
 backend for free:
 
-1. In `src/index.ts`, on `/sync/register` and `/sync/push`, call the RevenueCat
-   REST API (`GET https://api.revenuecat.com/v1/subscribers/{app_user_id}`) and
-   confirm the `cloud` entitlement is active before binding/writing.
-2. Store your RevenueCat **secret** API key as a Worker secret:
-   `npx wrangler secret put REVENUECAT_SECRET`.
-3. Send the RevenueCat app-user-id from the device alongside the token.
+1. In `src/index.ts`, on `/sync/register` and `/sync/push`, verify the device's
+   subscription with the **Google Play Developer API**
+   (`purchases.subscriptionsv2.get`) — and the equivalent App Store Server API
+   on iOS — and confirm the `cloud_sync_monthly` subscription is active before
+   binding/writing.
+2. Store the Google service-account credentials (and App Store issuer key) as
+   Worker secrets, e.g. `npx wrangler secret put PLAY_SERVICE_ACCOUNT_JSON`.
+3. Send the store purchase token from the device alongside the shop token.
 
 This pairs with hardening the shop code to `expo-crypto` random bytes (see the
 `ponytail` note in `apps/mobile/src/sync.ts`).
