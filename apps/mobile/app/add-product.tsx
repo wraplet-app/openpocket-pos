@@ -70,7 +70,11 @@ export default function AddProduct() {
   /** Look the barcode up online; fill the name (if empty) and product photo. */
   const lookup = async (code: string, silent = false) => {
     const bc = code.trim();
-    if (!/^\d{8,14}$/.test(bc) || looking) return;
+    if (looking) return;
+    if (!/^\d{8,14}$/.test(bc)) {
+      if (!silent) showAlert('Enter a barcode first', 'Type or scan a product barcode (8–14 digits), then tap Look up to auto-fill the name and photo.');
+      return;
+    }
     setLooking(true);
     try {
       const info = await lookupBarcode(bc);
@@ -147,8 +151,7 @@ export default function AddProduct() {
   const margin = sp > 0 && cp > 0 && Number.isFinite(sp) && Number.isFinite(cp) ? Math.round(((sp - cp) / sp) * 100) : null;
 
   return (
-    <Screen title={editId ? 'Edit product' : 'Add product'}
-      footer={<PrimaryButton label={editId ? 'Save changes' : 'Save product'} onPress={save} busy={busy} disabled={!store} />}>
+    <Screen title={editId ? 'Edit product' : 'Add product'}>
       {params.barcode ? (
         <View style={[st.scanned, { borderColor: t.ok, backgroundColor: t.panel }]}>
           <Text style={{ color: t.muted, fontSize: 12 }}>Scanned barcode</Text>
@@ -191,8 +194,8 @@ export default function AddProduct() {
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         <TextInput value={barcode} onChangeText={setBarcode} placeholder="scan or type (optional)" placeholderTextColor={t.muted}
           keyboardType="number-pad" style={[st.input, { flex: 1, color: t.fg, borderColor: t.line, backgroundColor: t.panel }]} />
-        <Pressable onPress={() => lookup(barcode)} disabled={looking || !/^\d{8,14}$/.test(barcode.trim())}
-          style={[st.lookup, { backgroundColor: t.accentSoft, opacity: looking || !/^\d{8,14}$/.test(barcode.trim()) ? 0.5 : 1 }]}>
+        <Pressable onPress={() => lookup(barcode)} disabled={looking}
+          style={[st.lookup, { backgroundColor: t.accentSoft, opacity: looking ? 0.6 : 1 }]}>
           {looking ? <ActivityIndicator color={t.accent} size="small" /> : <Ionicons name="sparkles-outline" size={18} color={t.accent} />}
           <Text style={{ color: t.accent, fontWeight: '700', marginLeft: 6, fontSize: 13 }}>Look up</Text>
         </Pressable>
@@ -224,6 +227,12 @@ export default function AddProduct() {
         field('Opening stock', stock, setStock, { kb: 'number-pad', ph: '0' })
       )}
       {field('Low-stock alert at', lowStock, setLowStock, { kb: 'number-pad', ph: `${DEFAULT_LOW_STOCK} (default)` })}
+
+      {/* Save lives at the end of the form (not a pinned bar), so it scrolls up
+          with the keyboard the same way the onboarding form does. */}
+      <View style={{ marginTop: space.xl }}>
+        <PrimaryButton label={editId ? 'Save changes' : 'Save product'} onPress={save} busy={busy} disabled={!store} />
+      </View>
 
       {/* Full-screen photo viewer */}
       <Modal visible={viewing && !!imageUri} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setViewing(false)}>
