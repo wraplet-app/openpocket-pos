@@ -38,7 +38,8 @@
       ],
       "expo-image",
       "expo-sharing",
-      "expo-iap"
+      "expo-iap",
+      "./plugins/withUploadSigning"
     ],
     "experiments": {
       "typedRoutes": false
