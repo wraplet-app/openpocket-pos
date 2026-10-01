@@ -110,6 +110,15 @@ you're selling.
 See [docs/development.md](docs/development.md) for the full setup, and
 [docs/architecture.md](docs/architecture.md) for the layering rules.
 
+## Reporting bugs & vulnerabilities
+
+Found a bug or have a feature request? Please open an issue at
+[github.com/wraplet-app/openpocket-pos/issues](https://github.com/wraplet-app/openpocket-pos/issues).
+We triage new issues regularly.
+
+For a **security vulnerability**, don't open a public issue — follow the private
+reporting process in [SECURITY.md](SECURITY.md).
+
 ## License
 
 MIT — see [LICENSE](LICENSE). Contributions welcome; see
