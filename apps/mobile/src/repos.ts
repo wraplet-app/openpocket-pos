@@ -839,6 +839,17 @@ export async function getProduct(id: string): Promise<Product | null> {
   return (await getDb().getFirstAsync<Product>(`${PRODUCT_SELECT} WHERE p.id = ?`, [id])) ?? null;
 }
 
+/** Soft-delete a product: it leaves the catalog (active=0, deleted_at set) but
+ * past sales keep their snapshotted name/price, so history is never broken. The
+ * tombstone syncs like any other change. */
+export async function deleteProduct(id: string): Promise<void> {
+  const now = Date.now();
+  await getDb().runAsync(
+    `UPDATE products SET active=0, deleted_at=?, updated_at=?, version=version+1 WHERE id=?`,
+    [now, now, id],
+  );
+}
+
 export interface SalesExportRow {
   invoice_no: string; sold_at: number; product: string; quantity: number;
   unit_price: number; line_total: number; grand_total: number;

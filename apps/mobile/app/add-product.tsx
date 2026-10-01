@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { fromMajorString, toMajorNumber, asMinor } from '@openpocket/pos-core';
 import {
-  getStore, createProduct, getProduct, updateProductFields, listCategories, ensureCategory,
+  getStore, createProduct, getProduct, updateProductFields, deleteProduct, listCategories, ensureCategory,
   findProductByBarcode, DEFAULT_LOW_STOCK, type Store, type Category,
 } from '../src/repos';
 import { pickFromGallery, takePhoto } from '../src/pos/images';
@@ -115,6 +115,14 @@ export default function AddProduct() {
   const pick = async (fn: () => Promise<string | null>) => {
     try { const u = await fn(); if (u) setImageUri(u); }
     catch (e) { showAlert('Could not add photo', e instanceof Error ? e.message : String(e)); }
+  };
+
+  const remove = () => {
+    if (!editId) return;
+    showAlert('Delete this product?', `"${name.trim() || 'This product'}" will be removed from your catalog. Past sales keep their records.`, [
+      { text: 'Keep', style: 'cancel' as const },
+      { text: 'Delete', style: 'destructive' as const, onPress: async () => { await deleteProduct(editId); router.back(); } },
+    ]);
   };
 
   // Tapping the photo: view it full-screen if one exists, plus take / gallery.
@@ -259,6 +267,11 @@ export default function AddProduct() {
       <View style={{ marginTop: space.xl }}>
         <PrimaryButton label={editId ? 'Save changes' : 'Save product'} onPress={save} busy={busy} disabled={!store} />
       </View>
+      {editId ? (
+        <Pressable onPress={remove} disabled={busy} hitSlop={8} style={{ alignSelf: 'center', paddingVertical: 14, marginTop: 4 }}>
+          <Text style={{ color: t.danger, fontWeight: '700', fontSize: 15 }}>Delete product</Text>
+        </Pressable>
+      ) : null}
 
       {/* Full-screen photo viewer */}
       <Modal visible={viewing && !!imageUri} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setViewing(false)}>

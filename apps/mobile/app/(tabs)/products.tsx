@@ -7,6 +7,7 @@ import { useSession } from '../../src/session';
 import { useRole } from '../../src/session';
 import { can } from '../../src/roles';
 import { ProductCard } from '../../src/pos/ProductCard';
+import { ScanModal } from '../../src/pos/ScanModal';
 import { TabHeader, IconButton, listProps, useTabListInset } from '../../src/pos/Screen';
 import { SearchField, Chip, ChipRow, ChipDivider, EmptyState } from '../../src/pos/kit';
 import { useTheme, space } from '../../src/theme';
@@ -23,6 +24,7 @@ export default function Products() {
   const [query, setQuery] = useState('');
   const [stockFilter, setStockFilter] = useState<StockFilter>(null);
   const [category, setCategory] = useState<string | null>(null); // category id
+  const [scanning, setScanning] = useState(false);
   const params = useLocalSearchParams<{ filter?: string }>();
 
   useFocusEffect(useCallback(() => { listProducts(store.id).then(setProducts); }, [store.id]));
@@ -72,7 +74,7 @@ export default function Products() {
         <View style={s.controls}>
           <SearchField
             value={query} onChangeText={setQuery} placeholder="Search name, barcode or SKU"
-            right={<Pressable onPress={() => router.push('/scan')} hitSlop={10} accessibilityLabel="Scan barcode"><Ionicons name="barcode-outline" size={20} color={t.accent} /></Pressable>}
+            right={<Pressable onPress={() => setScanning(true)} hitSlop={10} accessibilityLabel="Find a product by barcode"><Ionicons name="barcode-outline" size={20} color={t.accent} /></Pressable>}
           />
           <ChipRow>
             <Chip label="All" on={allOn} onPress={reset} />
@@ -102,6 +104,10 @@ export default function Products() {
           renderItem={({ item }) => <ProductCard product={item} />}
         />
       )}
+
+      {/* Barcode here FINDS the product (fills the search) so you can view, edit
+          or delete it — selling by scan lives on the Scan tab. */}
+      <ScanModal visible={scanning} onClose={() => setScanning(false)} onScan={(code) => { setStockFilter(null); setCategory(null); setQuery(code); }} />
     </View>
   );
 }
