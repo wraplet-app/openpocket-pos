@@ -8,10 +8,12 @@ Run a real shop from an Android or iOS phone — sell, print receipts, track
 stock and see your profit, with no account and no internet required. Optional
 cloud backup and multi-device sync for **$2/month**.
 
+[![CI](https://github.com/wraplet-app/openpocket-pos/actions/workflows/ci.yml/badge.svg)](https://github.com/wraplet-app/openpocket-pos/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/wraplet-app/openpocket-pos/actions/workflows/codeql.yml/badge.svg)](https://github.com/wraplet-app/openpocket-pos/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0fa678.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-0fa678)
-![Offline-first](https://img.shields.io/badge/offline--first-yes-0fa678)
-![Built with Expo](https://img.shields.io/badge/built%20with-Expo-000)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)
+![Built with Expo](https://img.shields.io/badge/built%20with-Expo-1f6feb?logo=expo&logoColor=white)
 
 [**Website**](https://openpocket.wraplet.app) · [**Features**](#features) · [**Documentation**](docs/) · [**Contributing**](CONTRIBUTING.md)
 
