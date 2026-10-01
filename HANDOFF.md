@@ -9,6 +9,65 @@ run it, where everything lives, and what's next.
 
 ---
 
+## 0. Latest status — 2026-09-30 (read this first)
+
+Everything below is **live**. This session shipped: brand-neutral demo photos, a
+release-build crash fix, refreshed marketing screenshots, and the marketing site
+on Vercel.
+
+**Live URLs**
+- Marketing site (Vercel): **https://openpocket-pos.vercel.app** ✅ live
+- Marketing site (GitHub Pages, also live): https://wraplet-app.github.io/openpocket-pos/
+- Sync backend (Cloudflare Worker + D1): **https://openpocket-sync.kashif-milo.workers.dev** ✅ live
+- Repo: https://github.com/wraplet-app/openpocket-pos (branch `main`)
+
+**Custom domain — ONE step left (the "later" item):** `openpocket.wraplet.app`
+is already added to the Vercel project. It just needs this DNS record at
+**GoDaddy** (wraplet.app runs on GoDaddy nameservers; apex already points at
+Vercel). The `clientUpdateProhibited` lock does NOT block adding a DNS record.
+
+| Type | Name | Value |
+|------|------|-------|
+| CNAME | `openpocket` | `af929bbdc813191b.vercel-dns-017.com` |
+
+(Vercel says the legacy `cname.vercel-dns.com` also works.) After adding it,
+open the Vercel project → Settings → Domains → **Refresh** on
+`openpocket.wraplet.app` and it goes green. This fixes the Chrome "Did you mean
+wraplet.app?" lookalike warning that the github.io URL triggers.
+
+**Demo store (for "everyone can try"):** in onboarding tap **"Explore a demo
+store instead"** — pulls the live **Maple Street Market** (24 brand-neutral
+products with real photos, 6 sales) from the cloud onto the device as a local
+sandbox, then disconnects so a tester's edits stay local. **No staff/PIN** — it
+opens straight into the POS (the demo's staff were removed so testers aren't
+blocked). Shop code to link a real 2nd device: `XRVK-2V3V-QP7G-FS69`.
+
+**Shareable release APK:** built at
+`apps/mobile/android/app/build/outputs/apk/release/app-release.apk` (also copied
+to repo-root `OpenPocket-POS.apk`, which is git-ignored — 138 MB, debug-signed,
+installs on any Android phone, no Play Store). Rebuild: `cd apps/mobile/android
+&& ./gradlew assembleRelease`.
+
+**Release crash fix (important):** the RevenueCat SDK **force-closes a release
+build configured with a Test Store key**. `subscription.ts` now uses the test
+key only in `__DEV__`; release builds use `REVENUECAT_PROD_KEY` (empty until
+Google Play billing is live), so billing is simply "not configured" and the app
+degrades gracefully. While billing is unconfigured, `hasCloudSync()` returns
+**true** so cloud backup is open to everyone (no paywall) — enforcement kicks in
+automatically once a real `goog_…` key is set. See §Subscription below.
+
+**Two things still need YOU (unchanged blockers):**
+1. **Google Play billing** — to charge the $2/mo and swap in the `goog_…` prod
+   key (see §Subscription). Until then cloud backup is free/open.
+2. **The GoDaddy DNS record above** — to finish `openpocket.wraplet.app`.
+
+**Demo data lives in D1, not the repo.** To edit it, run SQL against the live D1
+(`cd apps/sync-worker && npx wrangler d1 execute openpocket-production --remote
+--command "…"`). The demo store's token is `XRVK2V3VQP7GFS69`; product images are
+served from `docs/demo/*.jpg` via the Pages CDN.
+
+---
+
 ## 1. Quick start (get it running)
 
 Prereqs: **Node ≥ 22**, **pnpm 10** (`corepack enable`), Android Studio +
@@ -45,13 +104,11 @@ adb shell am start -a android.intent.action.VIEW \
   -d "openpocketpos://expo-development-client/?url=http%3A%2F%2F10.0.2.2%3A8081" io.openpocket.pos
 ```
 
-**Seed demo data (one tap):** on a fresh install, the setup screen shows a
-**"Load demo shop (dev)"** button (dev builds only). It creates "Maple Street
-Market" (USD): a full shop profile with logo and a customised receipt, 24 real
-products in 4 categories with real barcodes and photos, 2 staff (**owner Alex,
-PIN 1234**; **cashier Sam, PIN 5678**), 3 customers and a mix of
-cash/card/credit sales — via `apps/mobile/src/seed.ts`. To reset the demo,
-clear the app's data (`adb shell pm clear io.openpocket.pos`).
+**Demo data:** the old local `seed.ts` button is gone. The demo is now the live
+cloud store **"Maple Street Market"** — on the onboarding setup screen tap
+**"Explore a demo store instead"** to pull it (24 products with photos, 6 sales,
+no staff lock). It lives in Cloudflare D1, not the repo (see §0). To reset a
+device, clear the app's data (`adb shell pm clear io.openpocket.pos`).
 
 **Record a feature tour** (emulator running, demo shop loaded):
 `powershell -File scripts\demo-tour.ps1 [-Record] [-Dwell 1.0]` walks through every

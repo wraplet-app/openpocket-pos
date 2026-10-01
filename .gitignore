@@ -21,3 +21,6 @@ ios/
 # session debug artifacts (root-level screenshots + scratch CSVs)
 /*.png
 /*.csv
+
+# Shareable release APK (built locally, not tracked)
+OpenPocket-POS.apk

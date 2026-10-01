@@ -99,9 +99,8 @@ cd apps/mobile
 npx expo run:android          # or: npx expo run:ios  (dev build; barcode + camera need native)
 ```
 
-On first launch, tap **Load demo shop** (dev builds) to populate a store with
-24 real products, staff and sample sales — the state shown in the screenshots
-above.
+On first launch you'll set up your shop in two steps (name + receipt), then
+you're selling.
 
 See [docs/development.md](docs/development.md) for the full setup, and
 [docs/architecture.md](docs/architecture.md) for the layering rules.
