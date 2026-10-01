@@ -10,6 +10,7 @@ import {
 } from '../src/repos';
 import { pickFromGallery, takePhoto } from '../src/pos/images';
 import { lookupBarcode, downloadProductImage } from '../src/pos/lookup';
+import { ScanModal } from '../src/pos/ScanModal';
 import { useTheme, space, radius } from '../src/theme';
 import { Screen } from '../src/pos/Screen';
 import { Chip, PrimaryButton } from '../src/pos/kit';
@@ -41,6 +42,7 @@ export default function AddProduct() {
   const [viewing, setViewing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [looking, setLooking] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     getStore().then((s) => {
@@ -194,13 +196,17 @@ export default function AddProduct() {
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         <TextInput value={barcode} onChangeText={setBarcode} placeholder="scan or type (optional)" placeholderTextColor={t.muted}
           keyboardType="number-pad" style={[st.input, { flex: 1, color: t.fg, borderColor: t.line, backgroundColor: t.panel }]} />
+        <Pressable onPress={() => { Keyboard.dismiss(); setScanning(true); }}
+          accessibilityLabel="Scan barcode with camera" style={[st.scan, { backgroundColor: t.accent }]}>
+          <Ionicons name="barcode-outline" size={22} color={t.accentFg} />
+        </Pressable>
         <Pressable onPress={() => lookup(barcode)} disabled={looking}
           style={[st.lookup, { backgroundColor: t.accentSoft, opacity: looking ? 0.6 : 1 }]}>
           {looking ? <ActivityIndicator color={t.accent} size="small" /> : <Ionicons name="sparkles-outline" size={18} color={t.accent} />}
           <Text style={{ color: t.accent, fontWeight: '700', marginLeft: 6, fontSize: 13 }}>Look up</Text>
         </Pressable>
       </View>
-      <Text style={{ color: t.faint, fontSize: 11, marginTop: 6 }}>Auto-fills name and photo from the Open Food Facts database.</Text>
+      <Text style={{ color: t.faint, fontSize: 11, marginTop: 6 }}>Tap the camera to scan, or type a barcode — then it auto-fills the name and photo from Open Food Facts.</Text>
 
       {field(`Selling price (${store?.currency_code ?? ''})`, price, setPrice, { kb: 'decimal-pad', ph: '0.00', req: true })}
       {field(`Cost price (${store?.currency_code ?? ''})`, cost, setCost, { kb: 'decimal-pad', ph: '0.00 (optional)' })}
@@ -243,6 +249,9 @@ export default function AddProduct() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Camera barcode scanner */}
+      <ScanModal visible={scanning} onClose={() => setScanning(false)} onScan={(code) => { setBarcode(code); lookup(code); }} />
     </Screen>
   );
 }
@@ -250,6 +259,7 @@ export default function AddProduct() {
 const st = StyleSheet.create({
   scanned: { borderWidth: 1, borderRadius: radius.md, padding: space.md },
   lookup: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, paddingHorizontal: 14 },
+  scan: { width: 52, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md },
   photo: { width: 120, height: 120, borderRadius: radius.lg, borderWidth: 1 },
   photoEmpty: { alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed' },
   remove: { position: 'absolute', top: -8, right: -8, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
