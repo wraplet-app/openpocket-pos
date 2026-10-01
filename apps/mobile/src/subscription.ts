@@ -8,7 +8,8 @@
  * in RevenueCat + Google Play. Until then `billingAvailable()` is false and the
  * paywall shows a "set up billing" state (with a dev unlock for testing).
  *
- * See HANDOFF.md § "Subscription (RevenueCat)" for the full setup.
+ * Set REVENUECAT_PROD_KEY (below) to the Google Play `goog_…` key once the
+ * $2/mo product and a matching entitlement are configured in RevenueCat.
  */
 import { useCallback, useEffect, useState } from 'react';
 
