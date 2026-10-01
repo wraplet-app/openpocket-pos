@@ -11,6 +11,7 @@ cloud backup and multi-device sync for **$2/month**.
 [![CI](https://github.com/wraplet-app/openpocket-pos/actions/workflows/ci.yml/badge.svg)](https://github.com/wraplet-app/openpocket-pos/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/wraplet-app/openpocket-pos/actions/workflows/codeql.yml/badge.svg)](https://github.com/wraplet-app/openpocket-pos/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/wraplet-app/openpocket-pos/badge)](https://securityscorecards.dev/viewer/?uri=github.com/wraplet-app/openpocket-pos)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15134/badge)](https://www.bestpractices.dev/projects/15134)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0fa678.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-0fa678)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)
