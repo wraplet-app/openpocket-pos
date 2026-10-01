@@ -83,9 +83,11 @@ export function Screen({ title, subtitle, back = true, right, children, scroll =
     <View style={[s.root, { backgroundColor: t.bg }]}>
       <Header title={title} subtitle={subtitle} back={back} right={right} />
       {/* Android runs edge-to-edge, where the OS no longer resizes for the keyboard,
-          so KAV must handle it on both platforms. The offset is the fixed header
-          above this view, otherwise padding is over-applied and leaves a gap. */}
-      <KeyboardAvoidingView style={s.flex} behavior="padding" keyboardVerticalOffset={insets.top + HEADER_HEIGHT}>
+          so KAV handles it. With behavior="padding" the root view already starts at
+          the screen origin, so keyboardVerticalOffset must be 0 — any offset is ADDED
+          to the padding and leaves an empty gap above the keyboard (same as the
+          onboarding form, which uses no offset). */}
+      <KeyboardAvoidingView style={s.flex} behavior="padding">
         {scroll ? (
           <ScrollView
             {...scrollProps}
