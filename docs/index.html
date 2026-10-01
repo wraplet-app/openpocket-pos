@@ -109,8 +109,8 @@
   .nav.scrolled { border-bottom-color: var(--line); }
   .nav-in { display: flex; align-items: center; gap: 16px; height: 66px; }
   .brand { display: flex; align-items: center; gap: 11px; font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; }
-  .logo { width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(150deg, var(--accent-2), var(--accent-deep)); display: grid; place-items: center; color: #fff; box-shadow: var(--shadow-sm); }
-  .logo svg { width: 19px; height: 19px; }
+  .logo { width: 32px; height: 32px; border-radius: 10px; overflow: hidden; box-shadow: var(--shadow-sm); flex: none; }
+  .logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .nav-links { margin-left: auto; display: flex; align-items: center; gap: 24px; }
   .nav-links a.lnk { color: var(--muted); font-weight: 500; font-size: 15px; }
   .nav-links a.lnk:hover { color: var(--fg); }
@@ -233,7 +233,12 @@
   .foot-in a:hover { color: var(--accent-deep); }
   :root[data-theme="dark"] .foot-in a:hover, :root:not([data-theme="light"]) .foot-in a:hover { color: var(--accent-2); }
 
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  /* ---- Scroll reveal (added only via JS, so no-JS/reduced-motion stays visible) ---- */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s cubic-bezier(.22,.61,.36,1), transform .7s cubic-bezier(.22,.61,.36,1); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } .reveal { opacity: 1; transform: none; } }
 </style>
 </head>
 <body>
@@ -249,7 +254,7 @@
 <nav class="nav">
   <div class="wrap nav-in">
     <a class="brand" href="#top">
-      <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9.5 12 4l8 5.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5Z" fill="currentColor"/><rect x="8.5" y="13" width="7" height="8" rx="1.2" fill="#0a7a58"/></svg></span>
+      <span class="logo"><img src="icon.png" alt="OpenPocket POS" width="32" height="32"></span>
       OpenPocket
     </a>
     <span class="nav-links">
@@ -419,10 +424,38 @@
 
 <footer>
   <div class="wrap foot-in">
-    <span class="brand" style="font-size:16px"><span class="logo" style="width:26px;height:26px" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9.5 12 4l8 5.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5Z" fill="currentColor"/></svg></span> OpenPocket POS</span>
+    <span class="brand" style="font-size:16px"><span class="logo" style="width:26px;height:26px"><img src="icon.png" alt="" width="26" height="26"></span> OpenPocket POS</span>
     <span>Free &amp; offline-first · MIT licensed</span>
     <a href="https://github.com/wraplet-app/openpocket-pos" target="_blank" rel="noopener">github.com/wraplet-app/openpocket-pos</a>
   </div>
 </footer>
+
+<script>
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // In-page links scroll smoothly and never leave a #hash in the address bar.
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    e.preventDefault();
+    var id = a.getAttribute("href").slice(1);
+    var el = id && id !== "top" ? document.getElementById(id) : null;
+    if (el) el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    else window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+    history.replaceState(null, "", location.pathname + location.search);
+  });
+
+  // Gentle fade-up as sections enter the viewport.
+  if (!reduce && "IntersectionObserver" in window) {
+    var items = document.querySelectorAll(".section-head, .fact, .card, .trio .item, .spotlight, .os, .price, .hero-visual, .hero-copy");
+    items.forEach(function (el) { el.classList.add("reveal"); });
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+    items.forEach(function (el) { io.observe(el); });
+  }
+</script>
 </body>
 </html>
