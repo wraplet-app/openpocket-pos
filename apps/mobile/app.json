@@ -36,7 +36,8 @@
         }
       ],
       "expo-image",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-iap"
     ],
     "experiments": {
       "typedRoutes": false

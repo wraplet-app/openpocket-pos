@@ -69,13 +69,13 @@ opposite: a phone, a shopkeeper, and a queue of customers.
 - **Offline POS — free, forever.** Selling, inventory, staff, receipts and
   reports never cost anything and never need a connection.
 - **Cloud sync — $2/month.** Automatic backup and multi-device sync, billed
-  through the app store (RevenueCat). Cancel anytime.
+  through the app store. Cancel anytime.
 
 ## Tech
 
 React Native (Expo + Expo Router) · TypeScript · SQLite · Zustand ·
 pnpm + Turborepo monorepo · Cloudflare Worker + D1 for optional sync ·
-RevenueCat for subscriptions.
+in-app subscriptions via Google Play / App Store (expo-iap).
 
 ```
 openpocket-pos/
