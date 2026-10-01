@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # JavaScript/TypeScript dependencies (pnpm workspaces)
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      all-minor-patch:
+        update-types: [minor, patch]
+
+  # Keep the GitHub Actions in our workflows up to date
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
