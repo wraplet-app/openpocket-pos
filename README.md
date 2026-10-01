@@ -11,7 +11,9 @@ cloud backup and multi-device sync for **$2/month**.
 [![License: MIT](https://img.shields.io/badge/License-MIT-0fa678.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-0fa678)
 ![Offline-first](https://img.shields.io/badge/offline--first-yes-0fa678)
-![Expo](https://img.shields.io/badge/Expo-57-000)
+![Built with Expo](https://img.shields.io/badge/built%20with-Expo-000)
+
+[**Website**](https://openpocket.wraplet.app) · [**Features**](#features) · [**Documentation**](docs/) · [**Contributing**](CONTRIBUTING.md)
 
 </div>
 
