@@ -6,7 +6,7 @@ Please **do not** open a public issue for security vulnerabilities.
 
 Instead, report privately via GitHub's **"Report a vulnerability"** advisory
 form on this repository (Security → Advisories), or email the maintainers at
-`security@wraplet.app`.
+`info@wraplet.app`.
 
 Include: a description, reproduction steps, affected version/commit, and
 potential impact. We aim to acknowledge within 72 hours and to provide a
