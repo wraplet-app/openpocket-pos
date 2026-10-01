@@ -5,8 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { fromMajorString, toMajorNumber, asMinor } from '@openpocket/pos-core';
 import {
-  getStore, createProduct, getProduct, updateProductFields, listCategories, ensureCategory, DEFAULT_LOW_STOCK,
-  type Store, type Category,
+  getStore, createProduct, getProduct, updateProductFields, listCategories, ensureCategory,
+  findProductByBarcode, DEFAULT_LOW_STOCK, type Store, type Category,
 } from '../src/repos';
 import { pickFromGallery, takePhoto } from '../src/pos/images';
 import { lookupBarcode, downloadProductImage } from '../src/pos/lookup';
@@ -90,6 +90,26 @@ export default function AddProduct() {
     } catch {
       if (!silent) showAlert('Lookup failed', 'Could not reach the product database. Check your connection.');
     } finally { setLooking(false); }
+  };
+
+  /** A scan is for adding a product: fill it in quietly. If the barcode is
+   * already in the catalog, say so (and offer to edit it) instead of starting a
+   * duplicate; otherwise auto-fill from Open Food Facts with no "not found"
+   * popup — that alert is only for a deliberate "Look up" tap. */
+  const onScanned = async (code: string) => {
+    const bc = code.trim();
+    setBarcode(bc);
+    if (store && !editId) {
+      const existing = await findProductByBarcode(store.id, bc);
+      if (existing) {
+        showAlert('Already in your catalog', `"${existing.name}" already uses this barcode.`, [
+          { text: 'Edit that product', onPress: () => router.replace(`/add-product?id=${existing.id}`) },
+          { text: 'Keep adding new', style: 'cancel' as const },
+        ]);
+        return;
+      }
+    }
+    lookup(bc, true); // silent: fill name/photo if found, no popup if not
   };
 
   const pick = async (fn: () => Promise<string | null>) => {
@@ -251,7 +271,7 @@ export default function AddProduct() {
       </Modal>
 
       {/* Camera barcode scanner */}
-      <ScanModal visible={scanning} onClose={() => setScanning(false)} onScan={(code) => { setBarcode(code); lookup(code); }} />
+      <ScanModal visible={scanning} onClose={() => setScanning(false)} onScan={onScanned} />
     </Screen>
   );
 }
