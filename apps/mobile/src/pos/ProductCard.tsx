@@ -65,9 +65,9 @@ function ProductCardBase({ product }: { product: Product }) {
       )}
 
       {canEdit && (
-        <Pressable onPress={() => router.push({ pathname: '/add-product', params: { id: product.id } })} hitSlop={8}
+        <Pressable onPress={() => router.push({ pathname: '/add-product', params: { id: product.id } })} hitSlop={12}
           accessibilityLabel={`Edit ${product.name}`} style={[s.edit, { backgroundColor: t.panel, borderColor: t.line }]}>
-          <Ionicons name="create-outline" size={14} color={t.muted} />
+          <Ionicons name="create-outline" size={18} color={t.accent} />
         </Pressable>
       )}
     </View>
@@ -89,5 +89,8 @@ const s = StyleSheet.create({
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: space.sm, borderRadius: radius.sm + 2, height: 38 },
   stepper: { marginTop: space.sm, borderWidth: 1, borderRadius: radius.sm + 2, height: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2 },
   stepBtn: { width: 38, height: 34, alignItems: 'center', justifyContent: 'center' },
-  edit: { position: 'absolute', top: 16, left: 16, width: 26, height: 26, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  // A prominent, opaque edit button that sits above the image (elevation) so a
+  // tap on it opens the editor instead of falling through to add-to-cart.
+  edit: { position: 'absolute', top: 15, left: 15, width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 4, zIndex: 2 },
 });
