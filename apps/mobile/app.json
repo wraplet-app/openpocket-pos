@@ -10,6 +10,7 @@
     "newArchEnabled": true,
     "android": {
       "package": "io.openpocket.pos",
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundColor": "#0fa678"
