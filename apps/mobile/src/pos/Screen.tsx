@@ -51,17 +51,22 @@ export function Header({ title, subtitle, back = true, right }: { title: string;
   );
 }
 
-/** Scroll defaults: smooth, no scrollbar flicker, taps work while the keyboard is up. */
+/** Scroll defaults for forms: smooth, taps work while the keyboard is up, and
+ * scrolling does NOT dismiss the keyboard (iOS keeps the interactive drag-down),
+ * so you can scroll a form with the keyboard open — same as the onboarding form. */
 export const scrollProps = {
   showsVerticalScrollIndicator: false,
   keyboardShouldPersistTaps: 'handled' as const,
-  keyboardDismissMode: (Platform.OS === 'ios' ? 'interactive' : 'on-drag') as 'interactive' | 'on-drag',
+  keyboardDismissMode: (Platform.OS === 'ios' ? 'interactive' : 'none') as 'interactive' | 'none',
   scrollEventThrottle: 16,
 };
 
-/** Virtualisation defaults for long lists (products, sales, customers). */
+/** Virtualisation defaults for long lists (products, sales, customers). Here
+ * scrolling the results DOES tuck the search keyboard away, which feels right
+ * for a list. */
 export const listProps = {
   ...scrollProps,
+  keyboardDismissMode: 'on-drag' as const,
   initialNumToRender: 10,
   maxToRenderPerBatch: 10,
   windowSize: 7,
