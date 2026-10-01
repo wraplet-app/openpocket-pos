@@ -11,6 +11,7 @@ import { useTheme, initials } from '../theme';
 import { Thumb } from './Thumb';
 import { Row, useMoney } from './ui';
 import { CustomerPicker } from './CustomerPicker';
+import { showAlert } from './alert';
 
 const METHODS: { key: PaymentMethod; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'cash', label: 'Cash', icon: 'cash-outline' },
@@ -64,6 +65,15 @@ export function CheckoutSheet() {
   // Reset local entry state on cancel so a discount/cash amount never carries
   // over to the next customer's checkout.
   const onClose = () => { reset(); close(); };
+
+  // Void the whole bill: empty the cart and close. Confirmed so a busy counter
+  // doesn't wipe a big order by accident.
+  const cancelBill = () => {
+    showAlert('Cancel this bill?', 'This removes all items from the cart.', [
+      { text: 'Keep', style: 'cancel' },
+      { text: 'Cancel bill', style: 'destructive', onPress: () => { cart.clear(); reset(); close(); } },
+    ]);
+  };
 
   const confirm = async () => {
     if (blocked) return;
@@ -197,6 +207,10 @@ export function CheckoutSheet() {
             <Text style={{ color: t.accentFg, fontWeight: '800', fontSize: 17 }}>
               {busy ? 'Recording…' : isCredit ? `Record credit sale · ${money(totals.grandTotal)}` : `Complete sale · ${money(totals.grandTotal)}`}
             </Text>
+          </Pressable>
+          <Pressable onPress={cancelBill} disabled={busy || lines.length === 0} hitSlop={8}
+            style={{ alignSelf: 'center', paddingVertical: 12, marginTop: 2 }}>
+            <Text style={{ color: t.danger, fontWeight: '700', fontSize: 15, opacity: busy || lines.length === 0 ? 0.4 : 1 }}>Cancel bill</Text>
           </Pressable>
           </View>
         </View>
