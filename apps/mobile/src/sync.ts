@@ -15,6 +15,7 @@
 import {
   SYNC_TABLES, upsertSql, rowValues, changedSinceSql, type SyncTable,
 } from '@openpocket/database';
+import * as Crypto from 'expo-crypto';
 import { getDb } from './db';
 import { getStore } from './repos';
 
@@ -39,12 +40,13 @@ const CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 /**
  * A shop's sync secret: shown to the user as a shareable code and sent to the
  * server as the bearer token. Stored without dashes; displayed grouped.
- * ponytail: Math.random, ~80 bits. Swap to expo-crypto getRandomBytes together
- * with server-side entitlement enforcement, before the public launch.
+ * 16 chars over a 32-symbol alphabet = 80 bits drawn from a cryptographically
+ * secure RNG (expo-crypto). 256 is a multiple of 32, so (byte % 32) is bias-free.
  */
 export function newShopCode(): string {
+  const bytes = Crypto.getRandomBytes(16);
   let s = '';
-  for (let i = 0; i < 16; i++) s += CODE_ALPHABET[(Math.random() * CODE_ALPHABET.length) | 0];
+  for (let i = 0; i < 16; i++) s += CODE_ALPHABET[bytes[i]! % CODE_ALPHABET.length];
   return s;
 }
 

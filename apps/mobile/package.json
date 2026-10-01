@@ -18,6 +18,7 @@
     "expo-asset": "~57.0.18",
     "expo-camera": "~57.0.6",
     "expo-constants": "~57.0.20",
+    "expo-crypto": "~57.0.3",
     "expo-document-picker": "~57.0.3",
     "expo-file-system": "~57.0.7",
     "expo-iap": "^5.8.2",
