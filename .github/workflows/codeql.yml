@@ -10,6 +10,11 @@ on:
   schedule:
     - cron: '0 6 * * 1' # weekly, Mondays 06:00 UTC
 
+# Least privilege by default (OpenSSF Scorecard Token-Permissions); the analyze
+# job below widens this to the writes CodeQL needs.
+permissions:
+  contents: read
+
 jobs:
   analyze:
     name: Analyze (JavaScript/TypeScript)
