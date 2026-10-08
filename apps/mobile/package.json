@@ -14,7 +14,7 @@
     "@openpocket/database": "workspace:*",
     "@openpocket/pos-core": "workspace:*",
     "@openpocket/types": "workspace:*",
-    "expo": "~57.0.26",
+    "expo": "~58.0.3",
     "expo-asset": "~57.0.18",
     "expo-camera": "~57.0.6",
     "expo-constants": "~57.0.20",
