@@ -30,14 +30,14 @@
     "expo-sharing": "~57.0.22",
     "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
-    "react": "19.2.3",
-    "react-native": "0.86.3",
-    "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.26.2",
+    "react": "19.3.0",
+    "react-native": "0.87.1",
+    "react-native-safe-area-context": "~5.10.1",
+    "react-native-screens": "~4.28.0",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
-    "@types/react": "~19.2.2",
+    "@types/react": "~19.3.0",
     "typescript": "~6.0.3"
   },
   "private": true
